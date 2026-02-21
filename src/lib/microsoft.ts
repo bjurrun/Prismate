@@ -12,7 +12,7 @@ export async function getMicrosoftToken() {
         const client = await clerkClient();
         const oauthToken = await client.users.getUserOauthAccessToken(
             userId,
-            'oauth_microsoft'
+            'microsoft'
         );
 
         if (oauthToken.data.length === 0) {
@@ -41,6 +41,26 @@ export async function fetchFromGraph(endpoint: string) {
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Graph API Fout: ${errorData.error.message}`);
+    }
+
+    return response.json();
+}
+
+export async function mutateGraph(endpoint: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
+    const token = await getMicrosoftToken();
+
+    const response = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, {
+        method,
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Graph API Mutation Fout: ${errorData.error.message}`);
     }
 
     return response.json();
