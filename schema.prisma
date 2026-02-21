@@ -1,0 +1,89 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Gebruikers (Gekoppeld aan Clerk & Microsoft)
+model User {
+  id               String    @id // Clerk User ID
+  email            String    @unique
+  microsoftId      String?   @unique // Microsoft Graph User ID
+  createdAt        DateTime  @default(now())
+  tasks            Task[]
+  projects         Project[]
+  contacts         Contact[]
+}
+
+// 2. Projecten (Gekoppeld aan Microsoft To Do Lists)
+model Project {
+  id              String   @id @default(cuid())
+  microsoftId     String?  @unique // De ID van de Microsoft To Do List
+  displayName     String
+  isShared        Boolean  @default(false)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  tasks           Task[]
+  createdAt       DateTime @default(now())
+}
+
+// 3. Taken (Gekoppeld aan Microsoft TodoTask & Gevlagde E-mails)
+model Task {
+  id                   String   @id @default(cuid())
+  microsoftId          String?  @unique // De ID van de TodoTask of Message
+  title                String
+  body                 String?  @db.Text
+  status               String   @default("notStarted") // notStarted, inProgress, completed, etc.
+  importance           String   @default("normal") // low, normal, high
+  
+  // Datums (Microsoft Spiegeling)
+  isReminderOn         Boolean  @default(false)
+  createdDateTime      DateTime @default(now())
+  lastModifiedDateTime DateTime @updatedAt
+  startDateTime        DateTime?
+  dueDateTime          DateTime?
+  completedDateTime    DateTime?
+  reminderDateTime     DateTime?
+  
+  // Inbox Context (Voor gevlagde mails)
+  isFromEmail          Boolean  @default(false)
+  webLink              String?  // Link naar originele e-mail
+  fromEmail            String?  // Afzender van de gevlagde mail
+  
+  // Relaties
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  projectId            String?
+  project              Project? @relation(fields: [projectId], references: [id])
+  
+  // Sub-taken (Microsoft ChecklistItems)
+  checklists           ChecklistItem[]
+}
+
+model ChecklistItem {
+  id          String  @id @default(cuid())
+  title       String
+  isCompleted Boolean @default(false)
+  taskId      String
+  task        Task    @relation(fields: [taskId], references: [id])
+}
+
+// 4. Klanten (Gekoppeld aan Microsoft Contacts)
+model Contact {
+  id            String   @id @default(cuid())
+  microsoftId   String?  @unique
+  displayName   String
+  givenName     String?
+  surname       String?
+  jobTitle      String?
+  companyName   String?
+  email         String?
+  mobilePhone   String?
+  businessPhone String?
+  notes         String?  @db.Text
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+}
