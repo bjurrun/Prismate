@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { addTask, syncMicrosoftLists } from "./actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { TaskList } from "@/components/task-list"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function Dashboard() {
@@ -30,6 +30,7 @@ export default async function Dashboard() {
   // Haal de taken op voor de ingelogde gebruiker
   const tasks = await prisma.task.findMany({
     where: { userId: user.id },
+    include: { checklists: true, project: true },
     orderBy: { createdDateTime: 'desc' },
   })
 
@@ -51,7 +52,7 @@ export default async function Dashboard() {
 
         <Card className="border-border shadow-lg">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Nieuwe taak</CardTitle>
+            <CardTitle className="text-lg font-medium">Vang je taken</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <form action={addTask} className="flex gap-2">
@@ -65,23 +66,7 @@ export default async function Dashboard() {
             </form>
 
             <div className="space-y-3 pt-2">
-              {tasks.length === 0 ? (
-                <p className="text-sm text-center text-muted-foreground italic py-4">
-                  De inbox is leeg. Lekker gewerkt!
-                </p>
-              ) : (
-                tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center space-x-3 p-3 border rounded-lg bg-card hover:bg-accent/30 transition-all group"
-                  >
-                    <Checkbox id={task.id} className="rounded-full" checked={task.status === 'completed'} />
-                    <label htmlFor={task.id} className="text-sm font-medium leading-none flex-1 truncate">
-                      {task.title}
-                    </label>
-                  </div>
-                ))
-              )}
+              <TaskList tasks={tasks} />
             </div>
           </CardContent>
         </Card>

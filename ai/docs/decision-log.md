@@ -82,3 +82,38 @@
 - **Besluit**: Data Monitor pagina uitgebreid met real-time inspectie van Microsoft Tasks via een nested-fetch mechanisme.
 - **Rationale**: Directe verificatie van individuele taken en hun status (completed/notStarted) over verschillende lijsten heen is essentieel voor het kalibreren van de bidirectionele synchronisatie.
 - **Actie**: `/debug` route geoptimaliseerd met `Promise.all` voor parallelle fetches van taken per lijst. UI uitgebreid met een overzichtstabel voor alle Microsoft taken, inclusief status-mapping en lijst-referenties middels Badges. Sequentiële fetching en `Promise.allSettled` geïmplementeerd om Graph API throttling te voorkomen en stabiliteit te verhogen.
+
+## [2026-02-21] Iteration 2: Microsoft Sync Motor
+- **Besluit**: Implementatie van de Double-Write strategie voor taken.
+- **Rationale**: Door de taak eerst in Prisma (lokaal) op te slaan en daarna pas naar Microsoft Graph te pushen, garanderen we dat de gebruiker nooit hoeft te wachten op de cloud-integratie en nooit data verliest bij API-problemen.
+- **Actie**: `mutateGraph` helper toegevoegd aan `microsoft.ts`. `addTask` action in `actions.ts` gerefactored naar "Safety Net" patroon met automatische update van de `microsoftId` na succesvolle sync.
+
+## [2026-02-21] Troubleshooting Sync Motor
+- **Besluit**: Extra logging toegevoegd aan `addTask` voor connectiviteits-validatie.
+- **Rationale**: De gebruiker rapporteerde dat taken niet verschenen. Door "Echo" logs toe te voegen in de terminal, kunnen we bevestigen of de Server Action überhaupt bereikt wordt vanaf de UI.
+- **Actie**: `console.log` regels toegevoegd aan de start van `addTask` in `actions.ts`.
+- **Resultaat**: Geconstateerd dat `defaultList` niet gevonden werd. Zoeklogica uitgebreid naar fallback op "Tasks", "Taken" en uiteindelijk de eerste beschikbare lijst voor maximale robuustheid.
+
+## [2026-02-21] Status-sync geïmplementeerd
+- **Besluit**: Status-sync voltooid. Gebruik van Optimistic UI patronen voor checkbox-interacties.
+- **Rationale**: Afvinken in Prismate wordt nu direct gespiegeld in Microsoft To Do middels PATCH requests, wat de "Grip" methode versterkt door real-time status updates over platforms heen.
+- **Actie**: `toggleTaskStatus` server action en `TaskList` client component geïmplementeerd.
+## [2026-02-21] Prismate Task List (Todo10 Style)
+- **Besluit**: Implementatie van Todo10-layout met Shadcn Table en Sheet-integratie voor taakbeheer.
+- **Rationale**: De visuele taal van Shadcn Todo10 in combinatie met de Microsoft To Do sidebar-ervaring biedt een premium, functionele interface voor de "Grip" methode.
+- **Actie**: `TaskRow`, `TaskDetailSidebar` en `TaskList` componenten geïmplementeerd. Server actions uitgebreid met update, delete, duplicate en checklist functionaliteit.
+
+## [2026-02-21] Prismate Task Engine Modulariteit
+- **Besluit**: Modulaire opzet van `TaskRow`, `TaskDetailSheet` en `ProjectSelector`. Matching van Todo10-layout met microsoft graph velden voor taakbeheer.
+- **Rationale**: Door componenten te ontkoppelen en in specifieke namespaces (`tasks/`, `projects/`) te plaatsen, verhogen we de herbruikbaarheid en onderhoudbaarheid van de core engine.
+- **Actie**: `TaskRow` en `TaskDetailSheet` verplaatst naar `src/components/tasks/`. `ProjectSelector` toegevoegd. Project detail pagina geïmplementeerd met project-specifieke quick add.
+
+## [2026-02-21] Prismate Project Sync
+- **Besluit**: project koppeling met microsoft graph gelegd.
+- **Rationale**: Door projecten te koppelen aan Microsoft To Do lijsten, borgen we de cross-platform consistentie voor grotere werkpakketten.
+- **Actie**: `createProjectAction` geïmplementeerd met Graph API integratie en auto-selectie in `ProjectSelector`.
+
+## [2026-02-21] Microsoft List Synchronisatie
+- **Besluit**: Bestaande Microsoft To Do lijsten worden nu automatisch ingeladen als projecten.
+- **Rationale**: Gebruikers willen hun bestaande organisatiestructuur uit To Do direct kunnen gebruiken zonder alles handmatig opnieuw aan te maken.
+- **Actie**: `getProjects` uitgebreid met een Microsoft Graph sync-stap die lijsten upsert in de lokale database met een composite unique constraint (`userId`, `microsoftId`).

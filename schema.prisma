@@ -27,6 +27,8 @@ model Project {
   user            User     @relation(fields: [userId], references: [id])
   tasks           Task[]
   createdAt       DateTime @default(now())
+
+  @@unique([userId, microsoftId], name: "userId_microsoftId")
 }
 
 // 3. Taken (Gekoppeld aan Microsoft TodoTask & Gevlagde E-mails)
