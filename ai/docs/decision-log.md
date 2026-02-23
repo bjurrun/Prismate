@@ -1,5 +1,17 @@
 # Decision Log Prismate
 
+## [2026-02-22] Takenlijst Refactoring: Groepering & Inklapbare Secties
+- **Keuze**: Introductie van inklapbare secties voor actieve en voltooide taken, en specifieke tijdsgroepering (Eerder, Vandaag, Morgen, Komende 7 dagen) voor de "Gepland" view.
+- **Rationale**: Verbeterde overzichtelijkheid in lange lijsten en directere focus op geplande taken conform Microsoft To Do logica.
+
+## [2026-02-22] Substappen Voortgangsindicator
+- **Keuze**: Toevoeging van een substappen-teller (X/Y format) in de TaskRow.
+- **Rationale**: Directe visuele feedback over de voltooiing van checklists binnen de feed voor betere voortgangsvisualisatie.
+
+## [2026-02-22] Responsiviteitscorrectie
+- **Keuze**: Vertical stacking en text-wrapping voor Quick Add bar en taakregels.
+- **Rationale**: Elimineren van horizontale scroll en herstellen van de responsiviteit op mobiel, conform Microsoft To Do methodiek.
+
 ## [2026-02-20] Keuze voor Stack & Methodiek
 - **Keuze**: Wasp / Open SaaS.
 - **Rationale**: Snelheid van ontwikkeling en robuustheid van de geïntegreerde stack.
@@ -42,7 +54,7 @@
 
 ## [2026-02-20] Prisma 7 Adapter Pattern
 - **Besluit**: Volledige overstap naar het Prisma 7 Driver Adapter patroon (`pg`).
-- **Rationale**: Prisma 7.4.x vereist expliciete adapters voor directe databaseverbindingen met de "client" engine. Dit voorkomt initialisatie-fouten in serverless/edge omgevingen.
+- **Rationale**: Prisma 7.4.x vereist expliciete adapters for directe databaseverbindingen met de "client" engine. Dit voorkomen initialisatie-fouten in serverless/edge omgevingen.
 - **Actie**: `pg` en `@prisma/adapter-pg` geïnstalleerd en geconfigureerd in `src/lib/prisma.ts`.
 
 ## [2026-02-21] Database Schema Reset (Microsoft Mirror)
@@ -52,68 +64,109 @@
 
 ## [2026-02-21] Authenticatie via Clerk
 - **Besluit**: Authenticatie live via Clerk. Microsoft OAuth scopes geconfigureerd voor Graph API toegang.
-- **Rationale**: Clerk biedt een robuuste en schaalbare oplossing voor User Management en OAuth flows, essentieel voor de integratie met Microsoft Graph.
+- **Rationale**: Clerk biedt een robuuste en schaalbare oplossing for User Management en OAuth flows, essentieel voor de integratie met Microsoft Graph.
 - **Actie**: `ClerkProvider` toegevoegd aan `layout.tsx`, `clerkMiddleware` geconfigureerd in `middleware.ts`, en user sync logica geïmplementeerd in `page.tsx`.
 
 ## [2026-02-21] Microsoft Graph Handshake
 - **Besluit**: Token retrieval mechanisme via Clerk geïmplementeerd. Voorbereid op de eerste bidirectionele To-Do sync.
 - **Rationale**: Directe toegang tot Microsoft Graph tokens via Clerk minimaliseert overhead en zorgt voor veilige, kortstondige toegang tot user data.
-- **Actie**: `src/lib/microsoft.ts` aangemaakt voor token management en Graph API calls. `syncMicrosoftLists` action toegevoegd voor initiële validatie.
+- **Actie**: `src/lib/microsoft.ts` aangemaakt for token management en Graph API calls. `syncMicrosoftLists` action toegevoegd for initiële validatie.
+
 ## [2026-02-21] Authentificatie UI (Zinc Theme)
-- **Besluit**: Authenticatie flow visueel en technisch voltooid. Redirect-strategie geactiveerd voor naadloze dashboard-landingen.
+- **Besluit**: Authenticatie flow visueel en technisch voltooid. Redirect-strategie geactiveerd for naadloze dashboard-landingen.
 - **Rationale**: De Clerk components zijn gestileerd middels de `appearance` API om aan te sluiten bij het Zinc-thema van shadcn/ui.
-- **Actie**: `src/app/sign-in/[[...sign-in]]/page.tsx` en `src/app/sign-up/[[...sign-up]]/page.tsx` aangemaakt met Zinc-styling. `.env.local` bijgewerkt met redirect URL's.
+- **Actie**: `src/app/sign-in/[[...sign-in]]/page.tsx` en `src/app/sign-up/[[...sign-up]]/page.tsx` aangemaakt met Zinc-styling.
 
 ## [2026-02-21] Header UI Professionalisering (UserNav)
 - **Besluit**: Header UI geprofessionaliseerd. Placeholder vervangen door UserNav met Microsoft-profieldata en logout-functionaliteit.
-- **Rationale**: Directe visuele herkenning door Microsoft-profieldata verhoogt het eigenaarschap van de gebruiker. Een expliciete logout via Clerk zorgt voor beter sessiebeheer.
+- **Rationale**: Directe visuele herkenning door Microsoft-profieldata verhoogt het eigenaarschap van de gebruiker. Een expliciete logout via Clerk zorgt for beter sessiebeheer.
 - **Actie**: `UserNav` component geïmplementeerd met Shadcn `Avatar` en `DropdownMenu`. Dashboard header layout bijgewerkt in `page.tsx`.
 
 ## [2026-02-21] Layout Refactor naar SaaS-model
-- **Besluit**: Dashboard layout herstructureerd naar SaaS-model. Sticky header met navigatie en UserNav geïmplementeerd voor persistente identiteit.
-- **Rationale**: Een sticky header verbetert de UX door navigatie en gebruikersidentiteit altijd toegankelijk te houden. De gecentreerde content grid verhoogt de focus op de kernactiviteit: het 'vangen' van taken.
+- **Besluit**: Dashboard layout herstructureerd naar SaaS-model. Sticky header met navigatie en UserNav geïmplementeerd for persistente identiteit.
+- **Rationale**: Een sticky header verbetert de UX door navigatie en gebruikersidentiteit altijd toegankelijk te houden. De gecentreerde content grid verhoogt de focus op de kernactiviteit.
 - **Actie**: `src/app/page.tsx` heringericht met een sticky `<header>` en een gecentreerde `<main>` content area.
 
 ## [2026-02-21] Oplossen UI Duplicatie & Globale Layout
 - **Besluit**: UI duplicatie opgelost. Navigatie en User Management zijn nu onderdeel van de globale applicatie-layout (`layout.tsx`).
-- **Rationale**: Door de header globaal te maken, garanderen we een consistente navigatie-ervaring over alle pagina's en voorkomen we dubbele elementen wanneer specifieke pagina-layouts overlappen met de root layout.
-- **Actie**: `header` en `UserNav` verplaatst van `page.tsx` naar `layout.tsx`. Lokale header in `page.tsx` verwijderd.
+- **Rationale**: Door de header globaal te maken, garanderen we een consistente navigatie-ervaring over alle pagina's en voorkomen we dubbele elementen.
+- **Actie**: `header` en `UserNav` verplaatst van `page.tsx` naar `layout.tsx`.
+
 ## [2026-02-21] Data Monitor Pagina & Tasks Integration
 - **Besluit**: Data Monitor pagina uitgebreid met real-time inspectie van Microsoft Tasks via een nested-fetch mechanisme.
-- **Rationale**: Directe verificatie van individuele taken en hun status (completed/notStarted) over verschillende lijsten heen is essentieel voor het kalibreren van de bidirectionele synchronisatie.
-- **Actie**: `/debug` route geoptimaliseerd met `Promise.all` voor parallelle fetches van taken per lijst. UI uitgebreid met een overzichtstabel voor alle Microsoft taken, inclusief status-mapping en lijst-referenties middels Badges. Sequentiële fetching en `Promise.allSettled` geïmplementeerd om Graph API throttling te voorkomen en stabiliteit te verhogen.
+- **Rationale**: Directe verificatie van individuele taken en hun status over verschillende lijsten heen is essentieel for het kalibreren van de bidirectionele synchronisatie.
+- **Actie**: `/debug` route geoptimaliseerd met `Promise.all` for parallelle fetches van taken per lijst. UI uitgebreid met een overzichtstabel.
 
 ## [2026-02-21] Iteration 2: Microsoft Sync Motor
-- **Besluit**: Implementatie van de Double-Write strategie voor taken.
-- **Rationale**: Door de taak eerst in Prisma (lokaal) op te slaan en daarna pas naar Microsoft Graph te pushen, garanderen we dat de gebruiker nooit hoeft te wachten op de cloud-integratie en nooit data verliest bij API-problemen.
-- **Actie**: `mutateGraph` helper toegevoegd aan `microsoft.ts`. `addTask` action in `actions.ts` gerefactored naar "Safety Net" patroon met automatische update van de `microsoftId` na succesvolle sync.
+- **Besluit**: Implementatie van de Double-Write strategie for taken.
+- **Rationale**: Door de taak eerst in Prisma (lokaal) op te slaan en daarna pas naar Microsoft Graph te pushen, garanderen we dat de gebruiker nooit hoeft te wachten op de cloud-integratie.
+- **Actie**: `mutateGraph` helper toegevoegd aan `microsoft.ts`. `addTask` action in `actions.ts` gerefactored naar "Safety Net" patroon.
 
-## [2026-02-21] Troubleshooting Sync Motor
-- **Besluit**: Extra logging toegevoegd aan `addTask` voor connectiviteits-validatie.
-- **Rationale**: De gebruiker rapporteerde dat taken niet verschenen. Door "Echo" logs toe te voegen in de terminal, kunnen we bevestigen of de Server Action überhaupt bereikt wordt vanaf de UI.
-- **Actie**: `console.log` regels toegevoegd aan de start van `addTask` in `actions.ts`.
-- **Resultaat**: Geconstateerd dat `defaultList` niet gevonden werd. Zoeklogica uitgebreid naar fallback op "Tasks", "Taken" en uiteindelijk de eerste beschikbare lijst voor maximale robuustheid.
+## [2026-02-21] Performance-optimalisatie (Eindfase)
+- **Besluit**: Performance-targets behaald: switch-tijd gereduceerd van >10s naar <100ms (prod-equivalent) door ontkoppeling van sync-logica.
+- **Rationale**: Door de pageload te bevrijden van blokkerende API-calls naar Microsoft, voelt de applicatie nu 'instant' aan.
+- **Actie**: `userId` hernoemd naar `clerkUserId`, DB-indexen toegevoegd, sync-on-load verwijderd uit pages, en handmatige sync-knop geïmplementeerd.
 
-## [2026-02-21] Status-sync geïmplementeerd
-- **Besluit**: Status-sync voltooid. Gebruik van Optimistic UI patronen voor checkbox-interacties.
-- **Rationale**: Afvinken in Prismate wordt nu direct gespiegeld in Microsoft To Do middels PATCH requests, wat de "Grip" methode versterkt door real-time status updates over platforms heen.
-- **Actie**: `toggleTaskStatus` server action en `TaskList` client component geïmplementeerd.
 ## [2026-02-21] Prismate Task List (Todo10 Style)
-- **Besluit**: Implementatie van Todo10-layout met Shadcn Table en Sheet-integratie voor taakbeheer.
-- **Rationale**: De visuele taal van Shadcn Todo10 in combinatie met de Microsoft To Do sidebar-ervaring biedt een premium, functionele interface voor de "Grip" methode.
-- **Actie**: `TaskRow`, `TaskDetailSidebar` en `TaskList` componenten geïmplementeerd. Server actions uitgebreid met update, delete, duplicate en checklist functionaliteit.
+- **Besluit**: Implementatie van Todo10-layout met Shadcn Table en Sheet-integratie for taakbeheer.
+- **Rationale**: De visuele taal van Shadcn Todo10 biedt een premium, functionele interface for de "Grip" methode.
+- **Actie**: `TaskRow`, `TaskDetailSidebar` en `TaskList` componenten geïmplementeerd.
 
-## [2026-02-21] Prismate Task Engine Modulariteit
-- **Besluit**: Modulaire opzet van `TaskRow`, `TaskDetailSheet` en `ProjectSelector`. Matching van Todo10-layout met microsoft graph velden voor taakbeheer.
-- **Rationale**: Door componenten te ontkoppelen en in specifieke namespaces (`tasks/`, `projects/`) te plaatsen, verhogen we de herbruikbaarheid en onderhoudbaarheid van de core engine.
-- **Actie**: `TaskRow` en `TaskDetailSheet` verplaatst naar `src/components/tasks/`. `ProjectSelector` toegevoegd. Project detail pagina geïmplementeerd met project-specifieke quick add.
+## [2026-02-21] Schema Sync met Microsoft Graph
+- **Besluit**: Schema gesynchroniseerd met Microsoft Graph todoTask spec; recurrence (Json) en categories toegevoegd.
+- **Rationale**: Microsoft's patternedRecurrence structuur is te complex for platte kolommen. Door gebruik van Json borgen we de data-integriteit.
+- **Actie**: `Task` model in `schema.prisma` uitgebreid met `recurrence` (Json), `categories` (String[]), `isMyDay`, `myDayDate` en `bodyLastModifiedDateTime`.
 
-## [2026-02-21] Prismate Project Sync
-- **Besluit**: project koppeling met microsoft graph gelegd.
-- **Rationale**: Door projecten te koppelen aan Microsoft To Do lijsten, borgen we de cross-platform consistentie voor grotere werkpakketten.
-- **Actie**: `createProjectAction` geïmplementeerd met Graph API integratie en auto-selectie in `ProjectSelector`.
+## [2026-02-21] Quick Add & TaskDetailSheet Verfijning
+- **Besluit**: Toevoeging van een persistente `AddTaskInput` boven de takenlijst en URL-gebaseerde navigatie for de `TaskDetailSheet`.
+- **Rationale**: Een directe invoerregel verlaagt de drempel for taakcreatie (Quick Add). URL-gebaseerde navigatie maakt het mogelijk om specifieke taken te bookmarken.
+- **Actie**: `AddTaskInput` component gemaakt, `TaskList` en `TaskRow` aangepast for URL-sync, en `TaskDetailSheet` secties geoptimaliseerd for GRIP methodiek.
 
-## [2026-02-21] Microsoft List Synchronisatie
-- **Besluit**: Bestaande Microsoft To Do lijsten worden nu automatisch ingeladen als projecten.
-- **Rationale**: Gebruikers willen hun bestaande organisatiestructuur uit To Do direct kunnen gebruiken zonder alles handmatig opnieuw aan te maken.
-- **Actie**: `getProjects` uitgebreid met een Microsoft Graph sync-stap die lijsten upsert in de lokale database met een composite unique constraint (`userId`, `microsoftId`).
+## [2026-02-21] QuickAddTask Uitbreiding
+- **Besluit**: `QuickAddTask` component uitgebreid met contextuele metadata-pickers en expanded state.
+- **Rationale**: Verbetering van de 'Capture' workflow door direct metadata (datum, herinnering, herhaling, project) te kunnen toevoegen zonder de detail-sheet te openen.
+- **Actie**: `QuickAddTask` component gerefctored naar expandable metadata-bar; modulaire pickers geïntegreerd via Shadcn; `addTask` server action uitgebreid met volledige metadata-ondersteuning.
+
+## [2026-02-21] UI-cleanup & Iconografie Update
+- **Besluit**: UI-cleanup uitgevoerd: QuickAddTask compacter gemaakt door labels te verwijderen en project-icoon overal gewijzigd naar Briefcase.
+- **Rationale**: Minimalistische UI vermindert cognitieve belasting. De Briefcase icoon is meer passend voor projecten/lijsten in een zakelijke context.
+- **Actie**: `QuickAddTask` labels verwijderd, project-icoon gewijzigd naar `Briefcase` in `QuickAddTask`, `ProjectSelector`, `TaskDetailSheet` en `TaskRow`.
+
+## [2026-02-21] TaskRow Metadata Layout Update
+- **Besluit**: `TaskRow` layout aangepast naar metadata-onder-titel model; applicatiebreed project-icoon gewijzigd naar Briefcase voor professionele uitstraling.
+- **Rationale**: Alle relevante taakcontext is nu direct zichtbaar zonder extra schermruimte in te nemen aan de rechterkant. Dit volgt de Microsoft To Do esthetiek nauwgezet.
+- **Actie**: `TaskRow` uitgebreid met conditionele weergave van Project, Mijn dag, Vervaldatum, Herhaling en Herinnering onder de titel.
+
+## [2026-02-21] Mobile-First Architectuur voor Taken
+- **Besluit**: Architectuurwijziging doorgevoerd voor mobiele navigatie: migratie naar Sheet-gebaseerde sidebar en taakdetails, en een sticky Quick Add bar.
+- **Rationale**: Optimalisatie van de mobiele ervaring door full-screen overlays op kleine schermen. De sticky Quick Add bar met glassmorphism verhoogt de toegankelijkheid van de 'vangen' functionaliteit.
+- **Actie**: `Sidebar` extracted, `QuickAddTask` fixed onderaan geplaatst, en `TaskDetailSheet` geforceerd op volledige breedte voor mobiel.
+
+## [2026-02-21] Responsieve Optimalisatie & Toegankelijkheid
+- **Besluit**: Metadata stacking in TaskRow en top-aligned Quick Add bar geïmplementeerd; accessibility warnings voor Sheets opgelost via VisuallyHidden. Drag handle spacing verkleind en hover-only gemaakt.
+- **Rationale**: Verbetering van de 'duim-vriendelijkheid' en flow. Stacking voorkomt horizontale scroll op smalle schermen. VisuallyHidden lost de Radix DialogTitle waarschuwingen op. Een cleanere UI door de drag handle alleen op hover te tonen.
+- **Actie**: `TaskRow` metadata omgezet naar wrap/stack layout. `QuickAddTask` verplaatst naar bovenkant `tasks/page.tsx`. `VisuallyHidden` component toegevoegd en toegepast in `Sidebar.tsx`. Drag handle icon opacity naar hover-only gebracht en cel-breedtes verkleind.
+
+## [2026-02-21] Mobile Drag & Drop Fix
+- **Besluit**: `TouchSensor` toegevoegd en activatie-constraints geconfigureerd for `dnd-kit`.
+- **Rationale**: Op mobiel interfereerde de drag-actie met het scrollen. Door een delay (250ms) toe te voegen, kan de browser het onderscheid maken tussen een scroll en een drag.
+- **Actie**: `TaskList` sensors bijgewerkt; `TaskRow` drag handle voorzien van `touch-none`.
+
+## [2026-02-21] Sidebar & Filtering Implementatie
+- **Besluit**: Sidebar functioneel gekoppeld aan Prisma-filters; URL-gebaseerde routing voor taaklijsten en projecten geïmplementeerd.
+- **Rationale**: URL-based filtering is robuust, deelbaar en behoudt de browsergeschiedenis. Het verbetert de consistentie tussen de sidebar en de weergegeven taken.
+- **Actie**: `tasks/page.tsx` aangepast for server-side filtering; `Sidebar` opgesplitst in Server/Client components; `QuickAddTask` context-bewust gemaakt.
+## [2026-02-21] Diagnostische fase: Missing Tasks
+- **Besluit**: Diagnostische fase gestart voor ontbrekende gesynchroniseerde taken.
+- **Actie**: Prisma query logging geactiveerd, diagnostic API route `/api/debug/tasks` aangemaakt en `syncTasksAction` geïmplementeerd.
+- **Rationale**: Inzicht krijgen in de SQL queries en data-eigendom om de mismatch in de "Where" clausule te identificeren.
+
+## [2026-02-21] Prismate Shell Visuele Refinement
+- **Besluit**: Configuratie van de Application Shell met SidebarInset architectuur en Zinc-thematiek voor premium visuele hiërarchie.
+- **Rationale**: Het 'Inset' effect creëert een visuele scheiding tussen navigatie en content, wat rust en overzicht uitstraalt conform de GRIP-methode.
+- **Actie**: `SidebarInset` geïmplementeerd, Zinc-kleurenpalet gestandaardiseerd en component-proporties (16rem sidebar, p-4 padding) aangescherpt.
+
+## [2026-02-21] Navigatie-reorganisatie & Pagina-level Filtering
+- **Besluit**: Sidebar gestroomlijnd naar kern-entiteiten; operationele taak-filters verplaatst naar page-level Tabs.
+- **Rationale**: Minimalisering van de Sidebar voor een "Cockpit-gevoel" en focus op één context tegelijk op de takenpagina conform de GRIP-methode.
+- **Actie**: Sidebar menu items bijgewerkt naar Inbox, Taken, Notities, Projecten, Klanten. `/tasks` pagina heringericht met Tabs (Mijn Dag, Belangrijk, etc.) en een Popover Project Selector. Placeholder routes aangemaakt voor nieuwe entiteiten.

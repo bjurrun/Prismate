@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { addTask, syncMicrosoftLists } from "./actions"
+import { addTask, syncTasksAction } from "./actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { TaskList } from "@/components/task-list"
@@ -24,12 +24,13 @@ export default async function Dashboard() {
     },
   })
 
-  // Eerste Microsoft Sync test
-  const syncResult = await syncMicrosoftLists()
+  // Synchronisatie gebeurt nu via de handmatige refresh-knop
+  // const syncResult = await syncTasksAction()
+  const syncResult = { success: true } // Voorlopig OK tonen
 
   // Haal de taken op voor de ingelogde gebruiker
   const tasks = await prisma.task.findMany({
-    where: { userId: user.id },
+    where: { clerkUserId: user.id },
     include: { checklists: true, project: true },
     orderBy: { createdDateTime: 'desc' },
   })

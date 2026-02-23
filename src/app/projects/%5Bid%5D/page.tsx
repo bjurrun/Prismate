@@ -24,7 +24,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     }
 
     const project = await prisma.project.findUnique({
-        where: { id, userId },
+        where: { id, clerkUserId: userId },
         include: {
             tasks: {
                 include: { checklists: true, project: true },

@@ -23,12 +23,12 @@ model Project {
   microsoftId     String?  @unique // De ID van de Microsoft To Do List
   displayName     String
   isShared        Boolean  @default(false)
-  userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  clerkUserId     String
+  user            User     @relation(fields: [clerkUserId], references: [id])
   tasks           Task[]
   createdAt       DateTime @default(now())
 
-  @@unique([userId, microsoftId], name: "userId_microsoftId")
+  @@unique([clerkUserId, microsoftId], name: "clerkUserId_microsoftId")
 }
 
 // 3. Taken (Gekoppeld aan Microsoft TodoTask & Gevlagde E-mails)
@@ -39,6 +39,7 @@ model Task {
   body                 String?  @db.Text
   status               String   @default("notStarted") // notStarted, inProgress, completed, etc.
   importance           String   @default("normal") // low, normal, high
+  isImportant          Boolean  @default(false)
   
   // Datums (Microsoft Spiegeling)
   isReminderOn         Boolean  @default(false)
@@ -49,19 +50,28 @@ model Task {
   completedDateTime    DateTime?
   reminderDateTime     DateTime?
   
+  // Microsoft Graph Sync & GRIP logic
+  recurrence           Json?     // patternedRecurrence (pattern + range)
+  categories           String[]  @default([])
+  isMyDay              Boolean   @default(false)
+  myDayDate            DateTime?
+  bodyLastModifiedDateTime DateTime?
+  
   // Inbox Context (Voor gevlagde mails)
   isFromEmail          Boolean  @default(false)
   webLink              String?  // Link naar originele e-mail
   fromEmail            String?  // Afzender van de gevlagde mail
   
   // Relaties
-  userId               String
-  user                 User     @relation(fields: [userId], references: [id])
+  clerkUserId          String
+  user                 User     @relation(fields: [clerkUserId], references: [id])
   projectId            String?
   project              Project? @relation(fields: [projectId], references: [id])
   
   // Sub-taken (Microsoft ChecklistItems)
   checklists           ChecklistItem[]
+
+  @@index([clerkUserId, isImportant, isMyDay])
 }
 
 model ChecklistItem {
@@ -85,7 +95,7 @@ model Contact {
   mobilePhone   String?
   businessPhone String?
   notes         String?  @db.Text
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  clerkUserId   String
+  user          User     @relation(fields: [clerkUserId], references: [id])
   createdAt     DateTime @default(now())
 }

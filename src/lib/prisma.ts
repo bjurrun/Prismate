@@ -3,7 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import config from '../../prisma.config'
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
+const globalForPrisma = global as unknown as { prisma_v4: PrismaClient }
 
 // Prisma 7.x: Driver adapter pattern is required for direct connections.
 const connectionString = config?.datasource?.url
@@ -16,7 +16,10 @@ const pool = new Pool({ connectionString })
 const adapter = new PrismaPg(pool)
 
 export const prisma =
-    globalForPrisma.prisma ||
-    new PrismaClient({ adapter })
+    globalForPrisma.prisma_v4 ||
+    new PrismaClient({
+        adapter,
+        log: ['query', 'info', 'warn', 'error']
+    })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma_v4 = prisma

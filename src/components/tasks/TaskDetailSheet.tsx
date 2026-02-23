@@ -16,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import {
     Calendar as CalendarIcon,
-    Bell,
     Sun,
     Plus,
     Trash2,
@@ -35,6 +34,8 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ProjectSelector } from "../projects/ProjectSelector"
+import { ReminderPicker } from "./ReminderPicker"
+import { RecurrencePicker } from "./RecurrencePicker"
 
 interface ChecklistItem {
     id: string
@@ -49,6 +50,20 @@ interface Task {
     status: string
     importance: string
     dueDateTime?: Date | null
+    reminderDateTime?: Date | null
+    recurrence?: {
+        pattern?: {
+            type: string
+            interval: number
+            daysOfWeek?: string[]
+            dayOfMonth?: number
+            month?: number
+        }
+        range?: {
+            type: string
+        }
+    } | null
+    isMyDay?: boolean
     projectId: string | null
     checklists: ChecklistItem[]
 }
@@ -80,7 +95,6 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
 
     const handleTitleBlur = () => {
         if (title !== initialTask.title) {
-            console.log("📝 Hernoemen van taak naar:", title)
             startTransition(() => {
                 updateTask(initialTask.id, { title })
             })
@@ -89,7 +103,6 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
 
     const handleBodyBlur = () => {
         if (body !== initialTask.body) {
-            console.log("📝 Updaten van notitie...")
             startTransition(() => {
                 updateTask(initialTask.id, { body })
             })
@@ -144,7 +157,7 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
     }
 
     return (
-        <SheetContent side="right" className="sm:max-w-[400px] flex flex-col p-0 gap-0 overflow-hidden h-full">
+        <SheetContent side="right" className="w-screen max-w-none sm:max-w-[400px] flex flex-col p-0 gap-0 overflow-hidden h-full">
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <SheetHeader className="space-y-4">
                     <SheetTitle className="sr-only">Taak details</SheetTitle>
@@ -213,14 +226,43 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                 <Separator />
 
                 <div className="space-y-1">
-                    <Button variant="ghost" className="w-full justify-start gap-3 h-12 font-normal">
-                        <Sun className="h-4 w-4 text-muted-foreground" />
-                        Aan Mijn dag toevoegen
+                    <Button
+                        variant="ghost"
+                        className={cn(
+                            "w-full justify-start gap-3 h-12 font-normal",
+                            optimisticTask!.isMyDay ? "text-primary" : "text-muted-foreground"
+                        )}
+                        onClick={() => {
+                            const newIsMyDay = !optimisticTask!.isMyDay
+                            startTransition(() => {
+                                setOptimisticTask({ isMyDay: newIsMyDay })
+                                updateTask(optimisticTask!.id, { isMyDay: newIsMyDay, myDayDate: newIsMyDay ? new Date() : null })
+                            })
+                        }}
+                    >
+                        <Sun className={cn("h-4 w-4", optimisticTask!.isMyDay && "fill-primary")} />
+                        {optimisticTask!.isMyDay ? "In Mijn dag" : "Aan Mijn dag toevoegen"}
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start gap-3 h-12 font-normal">
-                        <Bell className="h-4 w-4 text-muted-foreground" />
-                        Herinner mij
-                    </Button>
+
+                    <ReminderPicker
+                        date={optimisticTask!.reminderDateTime}
+                        onChange={(date) => {
+                            startTransition(() => {
+                                setOptimisticTask({ reminderDateTime: date })
+                                updateTask(optimisticTask!.id, { reminderDateTime: date })
+                            })
+                        }}
+                    />
+
+                    <RecurrencePicker
+                        value={optimisticTask!.recurrence}
+                        onChange={(recurrence) => {
+                            startTransition(() => {
+                                setOptimisticTask({ recurrence })
+                                updateTask(optimisticTask!.id, { recurrence })
+                            })
+                        }}
+                    />
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" className="w-full justify-start gap-3 h-12 font-normal">

@@ -23,7 +23,7 @@ export async function createProjectAction(name: string) {
         const project = await prisma.project.create({
             data: {
                 displayName: name,
-                userId: userId,
+                clerkUserId: userId,
                 microsoftId: microsoftList.id
             }
         })
@@ -56,11 +56,11 @@ export async function getProjects() {
                 },
                 update: {
                     displayName: list.displayName,
-                    userId: userId // Ensure it's for this user
+                    clerkUserId: userId // Ensure it's for this user
                 },
                 create: {
                     displayName: list.displayName,
-                    userId: userId,
+                    clerkUserId: userId,
                     microsoftId: list.id
                 }
             })
@@ -70,25 +70,34 @@ export async function getProjects() {
     }
 
     return await prisma.project.findMany({
-        where: { userId }
+        where: { clerkUserId: userId }
     })
 }
 
 export async function addTask(formData: FormData) {
-    console.log("🚀 VANG-KNOP INGEDRUKT!");
     const { userId } = await auth()
     const title = formData.get("task") as string;
     const projectId = formData.get("projectId") as string | null;
+    const dueDateTimeStr = formData.get("dueDateTime") as string | null;
+    const reminderDateTimeStr = formData.get("reminderDateTime") as string | null;
+    const recurrenceStr = formData.get("recurrence") as string | null;
 
     if (!title || !userId) return;
+
+    const dueDateTime = dueDateTimeStr ? new Date(dueDateTimeStr) : null;
+    const reminderDateTime = reminderDateTimeStr ? new Date(reminderDateTimeStr) : null;
+    const recurrence = recurrenceStr ? JSON.parse(recurrenceStr) : null;
 
     const task = await prisma.task.create({
         data: {
             title,
-            userId,
+            clerkUserId: userId,
             importance: "normal",
             status: "notStarted",
-            projectId: projectId || null
+            projectId: projectId || null,
+            dueDateTime,
+            reminderDateTime,
+            isReminderOn: !!reminderDateTime
         },
     });
 
@@ -112,13 +121,20 @@ export async function addTask(formData: FormData) {
             throw new Error("Geen doellijst gevonden.");
         }
 
-        console.log(`📡 Gebruikte Microsoft lijst: ${targetList.displayName} (${targetList.id})`);
 
         // STAP 3: Push naar Microsoft
+        const graphTask: any = { title: title };
+        if (dueDateTime) graphTask.dueDateTime = { dateTime: dueDateTime.toISOString(), timeZone: "UTC" };
+        if (reminderDateTime) {
+            graphTask.isReminderOn = true;
+            graphTask.reminderDateTime = { dateTime: reminderDateTime.toISOString(), timeZone: "UTC" };
+        }
+        if (recurrence) graphTask.recurrence = recurrence;
+
         const microsoftTask = await mutateGraph(
             `/me/todo/lists/${targetList.id}/tasks`,
             "POST",
-            { title: title }
+            graphTask
         )
 
         // STAP 4: Update Prisma record met de microsoftId
@@ -130,7 +146,6 @@ export async function addTask(formData: FormData) {
             },
         })
 
-        console.log(`✅ Taak gesynced: ${title}`)
     } catch (error) {
         // We loggen de fout, maar de taak staat al in Prisma (un-synced)
         console.error("❌ Microsoft Sync mislukt, taak blijft lokaal:", error)
@@ -139,16 +154,80 @@ export async function addTask(formData: FormData) {
     revalidatePath("/")
 }
 
-export async function syncMicrosoftLists() {
-    try {
-        const data = await fetchFromGraph("/me/todo/lists");
-        console.log("Microsoft Lijsten gevonden:", data.value.length);
+export async function syncTasksAction() {
+    const { userId } = await auth()
+    if (!userId) return { success: false, error: "Niet ingelogd" }
 
-        // Voor nu loggen we ze alleen, later slaan we ze op in Prisma
-        return { success: true, lists: data.value };
+    try {
+
+        // 1. Haal alle lijsten op
+        const listsData = await fetchFromGraph("/me/todo/lists");
+        const lists = listsData.value as { id: string; displayName: string }[];
+
+        let totalSynced = 0;
+
+        // 2. Loop door elke lijst en haal taken op
+        for (const list of lists) {
+
+            // Zorg dat het project (lijst) bestaat in onze DB
+            const project = await prisma.project.upsert({
+                where: { microsoftId: list.id },
+                update: { displayName: list.displayName, clerkUserId: userId },
+                create: { microsoftId: list.id, displayName: list.displayName, clerkUserId: userId }
+            });
+
+            const tasksData = await fetchFromGraph(`/me/todo/lists/${list.id}/tasks`);
+            const microsoftTasks = tasksData.value as any[];
+
+            for (const mTask of microsoftTasks) {
+                // Map Microsoft status naar onze status
+                // Microsoft: notStarted, inProgress, completed, waitingOnOthers, deferred
+
+                await prisma.task.upsert({
+                    where: { microsoftId: mTask.id },
+                    update: {
+                        title: mTask.title,
+                        body: mTask.body?.content || null,
+                        status: mTask.status,
+                        importance: mTask.importance,
+                        // Alleen isImportant updaten als Microsoft 'high' stuurt, anders behouden we wat we hebben
+                        ...(mTask.importance === 'high' ? { isImportant: true } : {}),
+                        dueDateTime: mTask.dueDateTime?.dateTime ? new Date(mTask.dueDateTime.dateTime) : null,
+                        reminderDateTime: mTask.reminderDateTime?.dateTime ? new Date(mTask.reminderDateTime.dateTime) : null,
+                        isReminderOn: mTask.isReminderOn || false,
+                        completedDateTime: mTask.completedDateTime?.dateTime ? new Date(mTask.completedDateTime.dateTime) : null,
+                        lastModifiedDateTime: new Date(mTask.lastModifiedDateTime),
+                        createdDateTime: new Date(mTask.createdDateTime),
+                        projectId: project.id,
+                        clerkUserId: userId
+                    },
+                    create: {
+                        microsoftId: mTask.id,
+                        title: mTask.title,
+                        body: mTask.body?.content || null,
+                        status: mTask.status,
+                        importance: mTask.importance,
+                        isImportant: mTask.importance === 'high',
+                        dueDateTime: mTask.dueDateTime?.dateTime ? new Date(mTask.dueDateTime.dateTime) : null,
+                        reminderDateTime: mTask.reminderDateTime?.dateTime ? new Date(mTask.reminderDateTime.dateTime) : null,
+                        isReminderOn: mTask.isReminderOn || false,
+                        completedDateTime: mTask.completedDateTime?.dateTime ? new Date(mTask.completedDateTime.dateTime) : null,
+                        lastModifiedDateTime: new Date(mTask.lastModifiedDateTime),
+                        createdDateTime: new Date(mTask.createdDateTime),
+                        projectId: project.id,
+                        clerkUserId: userId
+                    }
+                });
+                totalSynced++;
+            }
+        }
+
+        revalidatePath("/");
+        revalidatePath("/tasks");
+        return { success: true, count: totalSynced };
     } catch (error) {
-        console.error("Sync mislukt:", error);
-        return { success: false, error: "Kon niet verbinden met Microsoft." };
+        console.error("❌ Sync mislukt:", error);
+        return { success: false, error: "Kon taken niet synchroniseren met Microsoft." };
     }
 }
 
@@ -158,12 +237,17 @@ export async function toggleTaskStatus(taskId: string, isCompleted: boolean) {
 
     // 1. Update lokaal in Prisma (De bron van waarheid voor de UI)
     const task = await prisma.task.update({
-        where: { id: taskId, userId: userId },
+        where: { id: taskId },
         data: {
             status: isCompleted ? "completed" : "notStarted",
             completedDateTime: isCompleted ? new Date() : null
         }
     })
+
+    // Security check: ensure user owns the task
+    if (task.clerkUserId !== userId) {
+        throw new Error("Niet gemachtigd")
+    }
 
     // 2. Microsoft Sync (indien gekoppeld)
     if (task.microsoftId) {
@@ -185,7 +269,6 @@ export async function toggleTaskStatus(taskId: string, isCompleted: boolean) {
                 "PATCH",
                 { status: isCompleted ? "completed" : "notStarted" }
             )
-            console.log(`✅ Microsoft status geüpdatet voor: ${task.title}`)
         } catch (error) {
             console.error("❌ Microsoft status sync mislukt:", error)
             // We draaien de lokale status NIET terug, om de UI flow niet te onderbreken.
@@ -195,14 +278,29 @@ export async function toggleTaskStatus(taskId: string, isCompleted: boolean) {
 
     revalidatePath("/")
 }
-export async function updateTask(taskId: string, data: Partial<{ title: string; body: string; status: string; importance: string; dueDateTime: Date | null; projectId: string | null }>) {
+export async function updateTask(taskId: string, data: Partial<{
+    title: string;
+    body: string;
+    status: string;
+    importance: string;
+    dueDateTime: Date | null;
+    projectId: string | null;
+    reminderDateTime: Date | null;
+    recurrence: any | null;
+    isMyDay: boolean;
+    myDayDate: Date | null;
+}>) {
     const { userId } = await auth()
     if (!userId) return
 
     const task = await prisma.task.update({
-        where: { id: taskId, userId: userId },
+        where: { id: taskId },
         data: data
     })
+
+    if (task.clerkUserId !== userId) {
+        throw new Error("Niet gemachtigd")
+    }
 
     if (task.microsoftId) {
         try {
@@ -221,6 +319,7 @@ export async function updateTask(taskId: string, data: Partial<{ title: string; 
                 if (data.importance) graphUpdate.importance = data.importance
                 if (data.status) graphUpdate.status = data.status
                 if (data.dueDateTime !== undefined) graphUpdate.dueDateTime = data.dueDateTime ? { dateTime: data.dueDateTime.toISOString(), timeZone: "UTC" } : null
+                if (data.recurrence !== undefined) graphUpdate.recurrence = data.recurrence
 
                 await mutateGraph(
                     `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
@@ -241,10 +340,11 @@ export async function deleteTask(taskId: string) {
     if (!userId) return
 
     const task = await prisma.task.findUnique({
-        where: { id: taskId, userId: userId }
+        where: { id: taskId },
+        include: { checklists: true }
     })
 
-    if (!task) return
+    if (!task || task.clerkUserId !== userId) return
 
     if (task.microsoftId) {
         try {
@@ -279,7 +379,7 @@ export async function duplicateTask(taskId: string) {
     if (!userId) return
 
     const task = await prisma.task.findUnique({
-        where: { id: taskId, userId: userId },
+        where: { id: taskId, clerkUserId: userId },
         include: { checklists: true }
     })
 
@@ -291,7 +391,7 @@ export async function duplicateTask(taskId: string) {
             body: task.body,
             status: "notStarted",
             importance: task.importance,
-            userId: userId,
+            clerkUserId: userId,
             projectId: task.projectId,
             checklists: {
                 create: task.checklists.map(item => ({
@@ -345,6 +445,57 @@ export async function deleteChecklistItem(itemId: string) {
 
     await prisma.checklistItem.delete({
         where: { id: itemId }
+    })
+
+    revalidatePath("/")
+    revalidatePath("/tasks")
+}
+export async function deleteCompletedTasks(filter?: string, projectId?: string) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const where: any = {
+        clerkUserId: userId,
+        status: "completed"
+    }
+
+    if (filter === 'myday') where.isMyDay = true
+    if (filter === 'important') where.isImportant = true
+    if (filter === 'planned') where.dueDateTime = { not: null }
+    if (projectId) where.projectId = projectId
+
+    const tasksToDelete = await prisma.task.findMany({
+        where,
+        select: { id: true, microsoftId: true }
+    })
+
+    for (const task of tasksToDelete) {
+        if (task.microsoftId) {
+            try {
+                const lists = await fetchFromGraph("/me/todo/lists")
+                const defaultList =
+                    lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
+                    lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
+                    lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
+                    lists.value[0];
+
+                if (defaultList) {
+                    await mutateGraph(
+                        `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
+                        "DELETE",
+                        {}
+                    )
+                }
+            } catch (error) {
+                console.error(`❌ Microsoft delete sync mislukt voor taak ${task.id}:`, error)
+            }
+        }
+    }
+
+    await prisma.task.deleteMany({
+        where: {
+            id: { in: tasksToDelete.map(t => t.id) }
+        }
     })
 
     revalidatePath("/")

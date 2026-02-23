@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Folder } from "lucide-react"
+import { Check, ChevronsUpDown, Briefcase } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -76,7 +76,7 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                     aria-expanded={open}
                     className="w-full justify-start gap-3 h-12 font-normal"
                 >
-                    <Folder className="h-4 w-4 text-muted-foreground" />
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
                     {selectedProject ? selectedProject.displayName : "Project toevoegen"}
                     <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                 </Button>
