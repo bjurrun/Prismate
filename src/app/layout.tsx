@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AppShell } from "@/components/app-shell";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { MantineProvider, createTheme, ColorSchemeScript, MantineColorsTuple } from "@mantine/core";
+import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
+import "dayjs/locale/nl";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,29 +23,46 @@ export const metadata: Metadata = {
   description: "Vang je taken en krijg grip op je dag.",
 };
 
+const myColor: MantineColorsTuple = [
+  '#ecefff',
+  '#d5dafb',
+  '#a9b1f1',
+  '#7a87e9',
+  '#5362e1',
+  '#3a4bdd',
+  '#2c40dc',
+  '#1f32c4',
+  '#182cb0',
+  '#0a259c'
+];
+
+const theme = createTheme({
+  primaryColor: 'myColor',
+  colors: {
+    myColor,
+  },
+  fontFamily: 'var(--font-geist-sans), sans-serif',
+});
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { userId } = await auth();
-
-  const projects = userId ? await prisma.project.findMany({
-    where: { user: { id: userId } },
-    orderBy: { displayName: 'asc' }
-  }) : [];
-
   return (
     <ClerkProvider>
-      <html lang="nl" className="antialiased">
+      <html lang="nl" className="antialiased" data-mantine-color-scheme="light">
+        <head>
+          <ColorSchemeScript defaultColorScheme="light" />
+        </head>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground font-sans`}
+          className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans`}
         >
-          <SidebarProvider className="bg-sidebar">
-            <AppShell projects={projects}>
+          <MantineProvider theme={theme} defaultColorScheme="light">
+            <AppShell>
               {children}
             </AppShell>
-          </SidebarProvider>
+          </MantineProvider>
         </body>
       </html>
     </ClerkProvider>

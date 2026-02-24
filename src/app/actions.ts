@@ -74,6 +74,38 @@ export async function getProjects() {
     })
 }
 
+export async function getTasksAction(filter?: string, projectId?: string) {
+    const { userId } = await auth()
+    if (!userId) return []
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+        clerkUserId: userId,
+        status: { not: "completed" }
+    }
+
+    if (filter === 'important') where.isImportant = true
+    if (filter === 'myday') where.isMyDay = true
+    if (filter === 'planned') where.dueDateTime = { not: null }
+    if (projectId) where.projectId = projectId
+
+    return await prisma.task.findMany({
+        where,
+        include: {
+            project: {
+                select: { displayName: true }
+            },
+            checklists: {
+                select: { id: true, title: true, isCompleted: true }
+            }
+        },
+        orderBy: [
+            { isImportant: 'desc' },
+            { createdDateTime: 'desc' }
+        ]
+    })
+}
+
 export async function addTask(formData: FormData) {
     const { userId } = await auth()
     const title = formData.get("task") as string;
@@ -123,6 +155,7 @@ export async function addTask(formData: FormData) {
 
 
         // STAP 3: Push naar Microsoft
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const graphTask: any = { title: title };
         if (dueDateTime) graphTask.dueDateTime = { dateTime: dueDateTime.toISOString(), timeZone: "UTC" };
         if (reminderDateTime) {
@@ -177,6 +210,7 @@ export async function syncTasksAction() {
             });
 
             const tasksData = await fetchFromGraph(`/me/todo/lists/${list.id}/tasks`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const microsoftTasks = tasksData.value as any[];
 
             for (const mTask of microsoftTasks) {
@@ -286,6 +320,7 @@ export async function updateTask(taskId: string, data: Partial<{
     dueDateTime: Date | null;
     projectId: string | null;
     reminderDateTime: Date | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recurrence: any | null;
     isMyDay: boolean;
     myDayDate: Date | null;
@@ -333,6 +368,52 @@ export async function updateTask(taskId: string, data: Partial<{
     }
 
     revalidatePath("/")
+}
+
+export async function scheduleTaskAction(taskId: string, startDateTime: Date) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000) // 1 hour later
+
+    const task = await prisma.task.update({
+        where: { id: taskId },
+        data: {
+            startDateTime: startDateTime,
+            dueDateTime: endDateTime,
+            status: "inProgress"
+        }
+    })
+
+    if (task.clerkUserId !== userId) {
+        throw new Error("Niet gemachtigd")
+    }
+
+    if (task.microsoftId) {
+        try {
+            const lists = await fetchFromGraph("/me/todo/lists")
+            const defaultList =
+                lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
+                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
+                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
+                lists.value[0];
+
+            if (defaultList) {
+                await mutateGraph(
+                    `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
+                    "PATCH",
+                    {
+                        dueDateTime: { dateTime: endDateTime.toISOString(), timeZone: "UTC" }
+                    }
+                )
+            }
+        } catch (error) {
+            console.error("❌ Microsoft schedule sync mislukt:", error)
+        }
+    }
+
+    revalidatePath("/")
+    revalidatePath("/agenda")
 }
 
 export async function deleteTask(taskId: string) {
@@ -394,7 +475,7 @@ export async function duplicateTask(taskId: string) {
             clerkUserId: userId,
             projectId: task.projectId,
             checklists: {
-                create: task.checklists.map(item => ({
+                create: task.checklists.map((item: { title: string; isCompleted: boolean }) => ({
                     title: item.title,
                     isCompleted: item.isCompleted
                 }))
@@ -454,6 +535,7 @@ export async function deleteCompletedTasks(filter?: string, projectId?: string) 
     const { userId } = await auth()
     if (!userId) return
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
         clerkUserId: userId,
         status: "completed"
@@ -494,10 +576,50 @@ export async function deleteCompletedTasks(filter?: string, projectId?: string) 
 
     await prisma.task.deleteMany({
         where: {
-            id: { in: tasksToDelete.map(t => t.id) }
+            id: { in: tasksToDelete.map((t: { id: string }) => t.id) }
         }
     })
 
     revalidatePath("/")
     revalidatePath("/tasks")
+}
+
+export async function getCalendarEvents(start: Date, end: Date) {
+    const { userId } = await auth()
+    if (!userId) return []
+
+    try {
+        const startStr = start.toISOString()
+        const endStr = end.toISOString()
+
+        // 1. Haal Microsoft Calendar events op
+        const data = await fetchFromGraph(`/me/calendarview?startDateTime=${startStr}&endDateTime=${endStr}&$top=250`)
+        const msEvents = data.value || []
+
+        // 2. Haal geplande taken op uit Prisma
+        const scheduledTasks = await prisma.task.findMany({
+            where: {
+                clerkUserId: userId,
+                startDateTime: {
+                    gte: start,
+                    lte: end
+                },
+                status: { not: "completed" }
+            },
+            include: {
+                project: {
+                    select: { displayName: true }
+                }
+            }
+        })
+
+        // Combineer ze (mapping gebeurt in het component voor consistentie met MS event interface)
+        return {
+            msEvents,
+            scheduledTasks
+        }
+    } catch (error) {
+        console.error("❌ Fout bij ophalen kalender data:", error)
+        return { msEvents: [], scheduledTasks: [] }
+    }
 }

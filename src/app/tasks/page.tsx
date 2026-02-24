@@ -4,13 +4,9 @@ import { redirect } from "next/navigation"
 import { TaskList } from "@/components/task-list"
 import { QuickAddTask } from "@/components/tasks/QuickAddTask"
 import { getProjects } from "@/app/actions"
-import { Prisma } from "@prisma/client"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+
+import { Button, Radio, Stack, Group, Title, Text, Tabs, Popover } from "@mantine/core"
 import { Briefcase } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export default async function TasksPage({
@@ -23,7 +19,8 @@ export default async function TasksPage({
 
     const { filter = 'all', projectId } = await searchParams
 
-    const where: Prisma.TaskWhereInput = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
         user: { id: userId },
         ...(filter === 'myday' ? { isMyDay: true } : {}),
         ...(filter === 'important' ? { isImportant: true } : {}),
@@ -63,50 +60,51 @@ export default async function TasksPage({
         month: 'long'
     }).format(new Date())
 
-    const currentProject = projects.find(p => p.id === projectId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentProject = projects.find((p: any) => p.id === projectId)
 
     return (
-        <div className="space-y-6 max-w-full overflow-x-hidden">
-            <header className="flex flex-col gap-6">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
-                    <p className="text-muted-foreground text-sm sm:text-base capitalize">{formattedDate}</p>
-                </div>
+        <Stack gap="lg" className="max-w-full overflow-x-hidden">
+            <Stack component="header" gap="md">
+                <Stack gap={4}>
+                    <Title order={1} className="text-2xl sm:text-3xl tracking-tight">{title}</Title>
+                    <Text c="dimmed" className="capitalize">{formattedDate}</Text>
+                </Stack>
 
                 <div className="max-w-4xl">
                     <QuickAddTask projects={projects} />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Tabs defaultValue={filter} className="w-full sm:w-auto">
-                        <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
-                            <TabsTrigger value="myday" asChild>
-                                <Link href={`/tasks?filter=myday${projectId ? `&projectId=${projectId}` : ''}`}>Mijn Dag</Link>
-                            </TabsTrigger>
-                            <TabsTrigger value="important" asChild>
-                                <Link href={`/tasks?filter=important${projectId ? `&projectId=${projectId}` : ''}`}>Belangrijk</Link>
-                            </TabsTrigger>
-                            <TabsTrigger value="planned" asChild>
-                                <Link href={`/tasks?filter=planned${projectId ? `&projectId=${projectId}` : ''}`}>Gepland</Link>
-                            </TabsTrigger>
-                            <TabsTrigger value="completed" asChild>
-                                <Link href={`/tasks?filter=completed${projectId ? `&projectId=${projectId}` : ''}`}>Voltooid</Link>
-                            </TabsTrigger>
-                            <TabsTrigger value="all" asChild>
-                                <Link href={`/tasks?filter=all${projectId ? `&projectId=${projectId}` : ''}`}>Alle</Link>
-                            </TabsTrigger>
-                        </TabsList>
+                <Group gap="sm" align="center">
+                    <Tabs value={filter} onChange={() => { }} variant="pills" className="w-full sm:w-auto">
+                        <Tabs.List className="bg-muted/50 p-1 flex-wrap h-auto rounded-md">
+                            <Link href={`/tasks?filter=myday${projectId ? `&projectId=${projectId}` : ''}`} className="no-underline">
+                                <Tabs.Tab value="myday">Mijn Dag</Tabs.Tab>
+                            </Link>
+                            <Link href={`/tasks?filter=important${projectId ? `&projectId=${projectId}` : ''}`} className="no-underline">
+                                <Tabs.Tab value="important">Belangrijk</Tabs.Tab>
+                            </Link>
+                            <Link href={`/tasks?filter=planned${projectId ? `&projectId=${projectId}` : ''}`} className="no-underline">
+                                <Tabs.Tab value="planned">Gepland</Tabs.Tab>
+                            </Link>
+                            <Link href={`/tasks?filter=completed${projectId ? `&projectId=${projectId}` : ''}`} className="no-underline">
+                                <Tabs.Tab value="completed">Voltooid</Tabs.Tab>
+                            </Link>
+                            <Link href={`/tasks?filter=all${projectId ? `&projectId=${projectId}` : ''}`} className="no-underline">
+                                <Tabs.Tab value="all">Alle</Tabs.Tab>
+                            </Link>
+                        </Tabs.List>
                     </Tabs>
 
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="sm" className={`gap-2 h-9 px-3 ${projectId ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}>
+                    <Popover position="bottom-end" shadow="md">
+                        <Popover.Target>
+                            <Button variant="subtle" color="gray" size="sm" className={`gap-2 h-9 px-3 ${projectId ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}>
                                 <Briefcase className="h-4 w-4" />
                                 <span className="hidden sm:inline">{currentProject?.displayName || "Projecten"}</span>
                                 {projectId && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-3" align="end">
+                        </Popover.Target>
+                        <Popover.Dropdown className="w-56 p-3">
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-sm font-semibold">Filter op project</h4>
@@ -116,37 +114,36 @@ export default async function TasksPage({
                                         </Link>
                                     )}
                                 </div>
-                                <RadioGroup defaultValue={projectId || "all"}>
-                                    <div className="flex items-center space-x-2 py-1">
-                                        <RadioGroupItem value="all" id="project-all" asChild>
-                                            <Link href={`/tasks?filter=${filter}`} className="hidden" />
-                                        </RadioGroupItem>
-                                        <Label htmlFor="project-all" className="flex-1 cursor-pointer">
-                                            <Link href={`/tasks?filter=${filter}`} className="block w-full">Alle projecten</Link>
-                                        </Label>
-                                    </div>
-                                    {projects.map((project) => (
-                                        <div key={project.id} className="flex items-center space-x-2 py-1">
-                                            <RadioGroupItem value={project.id} id={`project-${project.id}`} asChild>
-                                                <Link href={`/tasks?filter=${filter}&projectId=${project.id}`} className="hidden" />
-                                            </RadioGroupItem>
-                                            <Label htmlFor={`project-${project.id}`} className="flex-1 cursor-pointer truncate">
-                                                <Link href={`/tasks?filter=${filter}&projectId=${project.id}`} className="block w-full truncate">{project.displayName}</Link>
-                                            </Label>
+                                <Radio.Group value={projectId || "all"}>
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <div className="flex items-center space-x-2">
+                                            <Radio value="all" id="project-all" className="hidden" />
+                                            <label htmlFor="project-all" className="flex-1 cursor-pointer text-sm">
+                                                <Link href={`/tasks?filter=${filter}`} className="block w-full">Alle projecten</Link>
+                                            </label>
                                         </div>
-                                    ))}
-                                </RadioGroup>
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {projects.map((project: any) => (
+                                            <div key={project.id} className="flex items-center space-x-2">
+                                                <Radio value={project.id} id={`project-${project.id}`} className="hidden" />
+                                                <label htmlFor={`project-${project.id}`} className="flex-1 cursor-pointer truncate text-sm">
+                                                    <Link href={`/tasks?filter=${filter}&projectId=${project.id}`} className="block w-full truncate">{project.displayName}</Link>
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Radio.Group>
                             </div>
-                        </PopoverContent>
+                        </Popover.Dropdown>
                     </Popover>
-                </div>
-            </header>
+                </Group>
+            </Stack>
 
             <TaskList
                 tasks={tasks as Parameters<typeof TaskList>[0]['tasks']}
                 filter={filter}
                 projectId={projectId}
             />
-        </div>
+        </Stack>
     )
 }

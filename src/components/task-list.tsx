@@ -1,11 +1,7 @@
 'use client'
 
 import * as React from "react"
-import {
-    Table,
-    TableBody
-} from "@/components/ui/table"
-import { Sheet } from "@/components/ui/sheet"
+
 import { TaskRow } from "./tasks/TaskRow"
 import { TaskDetailSheet } from "./tasks/TaskDetailSheet"
 import {
@@ -19,7 +15,7 @@ import {
     ChevronRight,
     Trash2
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ActionIcon, Paper, Drawer } from "@mantine/core"
 import { cn } from "@/lib/utils"
 import { isBefore, isToday, isTomorrow, addDays, startOfToday, endOfDay } from "date-fns"
 import {
@@ -53,6 +49,7 @@ interface Task {
     importance: string
     dueDateTime?: Date | null
     reminderDateTime?: Date | null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recurrence?: any | null
     isMyDay?: boolean
     myDayDate?: Date | null
@@ -180,61 +177,61 @@ export function TaskList({ tasks: initialTasks, filter = 'all', projectId }: { t
         const isCollapsed = hasHeader && isCollapsible && collapsed[title]
 
         return (
-            <div key={title} className="rounded-xl border bg-card shadow-sm mb-4 overflow-hidden max-w-4xl">
+            <Paper key={title} withBorder radius="xl" shadow="sm" className="mb-4 overflow-hidden w-full">
                 {hasHeader && (
                     <div
                         className={cn(
-                            "flex items-center justify-between px-4 py-2 hover:bg-muted/50 transition-colors",
-                            isCollapsible ? "cursor-pointer group/header select-none" : "cursor-default"
+                            "flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors border-b border-gray-100",
+                            isCollapsible ? "cursor-pointer group/header select-none" : "cursor-default",
+                            isCollapsed && "border-b-0"
                         )}
                         onClick={() => isCollapsible && toggleCollapse(title)}
                     >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             {isCollapsible && (
-                                isCollapsed ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                isCollapsed ? <ChevronRight className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />
                             )}
-                            <h3 className="text-sm font-semibold flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-gray-900 flex flex-row items-center gap-2">
                                 {title}
                                 {showCounter && (
-                                    <span className="text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
                                         {groupTasks.length}
                                     </span>
                                 )}
                             </h3>
                         </div>
                         {showBulkDelete && groupTasks.length > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-0 group-hover/header:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                            <ActionIcon
+                                variant="subtle"
+                                color="red"
+                                size="lg"
+                                className="opacity-0 group-hover/header:opacity-100 transition-opacity"
                                 onClick={handleDeleteCompleted}
                             >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                                <Trash2 className="h-5 w-5" />
+                            </ActionIcon>
                         )}
                     </div>
                 )}
                 {!isCollapsed && (
-                    <Table className="table-fixed">
-                        <TableBody>
-                            <SortableContext
-                                items={groupTasks.map(t => t.id)}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                {groupTasks.map((task) => (
-                                    <TaskRow
-                                        key={task.id}
-                                        task={task}
-                                        onClick={(id) => setSelectedTaskId(id)}
-                                        onDelete={deleteTask}
-                                        onDuplicate={duplicateTask}
-                                    />
-                                ))}
-                            </SortableContext>
-                        </TableBody>
-                    </Table>
+                    <div className="flex flex-col">
+                        <SortableContext
+                            items={groupTasks.map(t => t.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {groupTasks.map((task) => (
+                                <TaskRow
+                                    key={task.id}
+                                    task={task}
+                                    onClick={(id) => setSelectedTaskId(id)}
+                                    onDelete={deleteTask}
+                                    onDuplicate={duplicateTask}
+                                />
+                            ))}
+                        </SortableContext>
+                    </div>
                 )}
-            </div>
+            </Paper>
         )
     }
 
@@ -242,7 +239,7 @@ export function TaskList({ tasks: initialTasks, filter = 'all', projectId }: { t
 
     return (
         <div className="w-full">
-            <Sheet open={!!selectedTaskId} onOpenChange={(open) => !open && setSelectedTaskId(null)}>
+            <>
                 {mounted ? (
                     <DndContext
                         sensors={sensors}
@@ -270,9 +267,9 @@ export function TaskList({ tasks: initialTasks, filter = 'all', projectId }: { t
                             </>
                         )}
                         {tasks.length === 0 && (
-                            <div className="rounded-xl border bg-muted/20 border-dashed text-center text-muted-foreground italic py-12 max-w-4xl">
+                            <Paper withBorder radius="xl" className="bg-muted/20 border-dashed border-2 text-center text-muted-foreground italic py-12 max-w-4xl">
                                 De inbox is leeg. Lekker gewerkt!
-                            </div>
+                            </Paper>
                         )}
                     </DndContext>
                 ) : (
@@ -280,8 +277,17 @@ export function TaskList({ tasks: initialTasks, filter = 'all', projectId }: { t
                 )}
 
                 {/* Sidebar voor details */}
-                <TaskDetailSheet task={selectedTask} />
-            </Sheet>
+                <Drawer
+                    opened={!!selectedTaskId}
+                    onClose={() => setSelectedTaskId(null)}
+                    position="right"
+                    size="md"
+                    padding={0}
+                    withCloseButton={false}
+                >
+                    <TaskDetailSheet task={selectedTask} onClose={() => setSelectedTaskId(null)} />
+                </Drawer>
+            </>
         </div>
     )
 }

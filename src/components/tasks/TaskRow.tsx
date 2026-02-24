@@ -1,14 +1,6 @@
 'use client'
 
-import { TableCell, TableRow } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
+import { Checkbox, ActionIcon, Group, Stack, Menu } from "@mantine/core"
 import { GripVertical, MoreHorizontal, Calendar, Trash, Copy, Star, Briefcase, Sun, Repeat, Bell, ListTree } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -109,44 +101,48 @@ export function TaskRow({ task, onClick, onDelete, onDuplicate }: TaskRowProps) 
     }
 
     return (
-        <TableRow
+        <Group
             ref={setNodeRef}
             style={style}
+            wrap="nowrap"
+            justify="space-between"
             className={cn(
-                "group cursor-pointer hover:bg-muted/50 transition-colors",
-                isDragging && "bg-muted shadow-lg ring-1 ring-primary/20",
+                "group px-6 py-4 border-b last:border-b-0 border-gray-100 cursor-pointer hover:bg-gray-50/50 transition-colors",
+                isDragging && "bg-white shadow-xl ring-1 ring-primary/20",
                 task.id === searchParams.get("taskId") && "bg-primary/5"
             )}
             onClick={() => onClick(task.id)}
         >
-            <TableCell className="w-8 p-0 text-center shrink-0">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 cursor-grab active:cursor-grabbing touch-none"
+            <Group wrap="nowrap" gap="md" style={{ flex: 1, minWidth: 0 }}>
+                <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="lg"
+                    className="cursor-grab active:cursor-grabbing touch-none shrink-0"
                     {...attributes}
                     {...listeners}
                 >
-                    <GripVertical className="h-5 w-5 m-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Button>
-            </TableCell>
-            <TableCell className="w-8 p-0 text-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                    checked={isCompleted}
-                    onCheckedChange={(checked) => handleToggleStatus(!!checked)}
-                    className="rounded-full h-5 w-5"
-                />
-            </TableCell>
-            <TableCell className="py-3 pr-0 w-full">
-                <div className="flex flex-col gap-1 min-w-0">
+                    <GripVertical className="h-5 w-5 m-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </ActionIcon>
+
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                        checked={isCompleted}
+                        onChange={(e) => handleToggleStatus(e.currentTarget.checked)}
+                        radius="xl"
+                        size="md"
+                    />
+                </div>
+
+                <Stack gap={4} className="min-w-0">
                     <span className={cn(
-                        "text-sm font-medium transition-all whitespace-normal break-words",
-                        isCompleted && "text-muted-foreground line-through"
+                        "text-sm font-medium transition-all whitespace-normal break-words text-gray-700 group-hover:text-gray-900",
+                        isCompleted && "text-gray-400 line-through"
                     )}>
                         {task.title}
                     </span>
 
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-gray-500">
                         {/* Project */}
                         {task.project && (
                             <div className="flex items-center gap-1">
@@ -159,7 +155,7 @@ export function TaskRow({ task, onClick, onDelete, onDuplicate }: TaskRowProps) 
                         {task.isMyDay && (
                             <div className="flex items-center gap-1">
                                 <Sun className="h-3 w-3 text-primary/70" />
-                                <span>Mijn dag</span>
+                                <span className="text-primary/70">Mijn dag</span>
                             </div>
                         )}
 
@@ -189,49 +185,46 @@ export function TaskRow({ task, onClick, onDelete, onDuplicate }: TaskRowProps) 
 
                         {/* Substappen */}
                         {totalSubtasks > 0 && (
-                            <div className="flex items-center gap-1 ml-1 border-l pl-2">
+                            <div className="flex items-center gap-1 ml-1 border-l border-gray-200 pl-2">
                                 <ListTree className="h-3 w-3" />
                                 <span className="font-medium">{completedSubtasks}/{totalSubtasks}</span>
                             </div>
                         )}
                     </div>
+                </Stack>
+            </Group>
+
+            <Group gap="xs" wrap="nowrap" className="shrink-0 pl-4">
+                <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="lg"
+                    onClick={handleToggleImportance}
+                >
+                    <Star className={cn(
+                        "h-5 w-5 transition-colors",
+                        optimisticImportance === "high" ? "fill-primary text-primary" : "text-gray-400 group-hover:text-gray-600"
+                    )} />
+                </ActionIcon>
+
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Menu position="bottom-end" shadow="md">
+                        <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray" size="lg">
+                                <MoreHorizontal className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+                            </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                            <Menu.Item leftSection={<Copy className="h-4 w-4" />} onClick={() => onDuplicate(task.id)}>
+                                Dupliceren
+                            </Menu.Item>
+                            <Menu.Item color="red" leftSection={<Trash className="h-4 w-4" />} onClick={() => onDelete(task.id)}>
+                                Verwijderen
+                            </Menu.Item>
+                        </Menu.Dropdown>
+                    </Menu>
                 </div>
-            </TableCell>
-            <TableCell className="py-3 text-right shrink-0 w-10 p-0">
-                <div className="flex items-center justify-end gap-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={handleToggleImportance}
-                    >
-                        <Star className={cn(
-                            "h-4 w-4 transition-colors",
-                            optimisticImportance === "high" ? "fill-primary text-primary" : "text-muted-foreground"
-                        )} />
-                    </Button>
-                </div>
-            </TableCell>
-            <TableCell className="w-10 p-0 text-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onDuplicate(task.id)} className="gap-2">
-                            <Copy className="h-4 w-4" /> Dupliceren
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() => onDelete(task.id)}
-                            className="gap-2 text-destructive focus:text-destructive"
-                        >
-                            <Trash className="h-4 w-4" /> Verwijderen
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </TableCell>
-        </TableRow>
+            </Group>
+        </Group>
     )
 }

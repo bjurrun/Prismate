@@ -1,15 +1,17 @@
+import { Stack, Title, Text, Paper, Center } from "@mantine/core"
+
 export default function ProjectsPage() {
     return (
-        <div className="space-y-6 sm:space-y-8">
-            <header className="flex flex-col gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Projecten</h1>
-                    <p className="text-muted-foreground text-sm sm:text-base">Beheer je projecten en doelen.</p>
-                </div>
-            </header>
-            <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed rounded-xl border-muted-foreground/20">
-                <p className="text-muted-foreground">Hier komt het projectenoverzicht.</p>
-            </div>
-        </div>
+        <Stack gap="xl">
+            <Stack gap="xs">
+                <Title order={1} className="text-2xl sm:text-3xl tracking-tight">Projecten</Title>
+                <Text c="dimmed">Beheer je projecten en doelen.</Text>
+            </Stack>
+            <Paper withBorder radius="xl" p="xl" className="min-h-[400px] border-dashed border-2 bg-transparent">
+                <Center h="100%">
+                    <Text c="dimmed">Hier komt het projectenoverzicht.</Text>
+                </Center>
+            </Paper>
+        </Stack>
     )
 }

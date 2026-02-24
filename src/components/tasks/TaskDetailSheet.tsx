@@ -1,19 +1,9 @@
 'use client'
 
 import * as React from "react"
-import {
-    SheetContent,
-    SheetHeader,
-    SheetFooter,
-    SheetClose,
-    SheetTitle,
-    SheetDescription
-} from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
+
+import { Button, TextInput, Textarea, Checkbox, ActionIcon, Popover } from "@mantine/core"
+import { DatePicker } from "@mantine/dates"
 import {
     Calendar as CalendarIcon,
     Sun,
@@ -31,8 +21,6 @@ import {
 } from "@/app/actions"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ProjectSelector } from "../projects/ProjectSelector"
 import { ReminderPicker } from "./ReminderPicker"
 import { RecurrencePicker } from "./RecurrencePicker"
@@ -68,7 +56,7 @@ interface Task {
     checklists: ChecklistItem[]
 }
 
-export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
+export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | null, onClose: () => void }) {
     const [isPending, startTransition] = React.useTransition()
     const [optimisticTask, setOptimisticTask] = React.useOptimistic(
         initialTask,
@@ -157,34 +145,36 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
     }
 
     return (
-        <SheetContent side="right" className="w-screen max-w-none sm:max-w-[400px] flex flex-col p-0 gap-0 overflow-hidden h-full">
+        <div className="flex flex-col h-[100dvh]">
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                <SheetHeader className="space-y-4">
-                    <SheetTitle className="sr-only">Taak details</SheetTitle>
-                    <SheetDescription className="sr-only">Bekijk en bewerk de details van deze taak.</SheetDescription>
+                <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <Checkbox
                             checked={optimisticTask!.status === "completed"}
-                            onCheckedChange={(checked) => handleToggleStatus(!!checked)}
-                            className="h-5 w-5 rounded-full"
+                            onChange={(e) => handleToggleStatus(e.currentTarget.checked)}
+                            radius="xl"
+                            size="md"
                         />
-                        <Input
+                        <TextInput
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={(e) => setTitle(e.currentTarget.value)}
                             onBlur={handleTitleBlur}
-                            className="text-xl font-bold border-none p-0 focus-visible:ring-0 h-auto"
+                            variant="unstyled"
+                            className="flex-1"
+                            styles={{ input: { fontSize: '20px', fontWeight: 700 } }}
                         />
-                        <Button
-                            variant="ghost"
-                            size="icon"
+                        <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            size="lg"
                             onClick={handleImportanceToggle}
                             className="ml-auto"
                         >
                             <Star className={cn(
-                                "h-5 w-5",
+                                "h-6 w-6 transition-colors",
                                 optimisticTask!.importance === "high" ? "fill-primary text-primary" : "text-muted-foreground"
                             )} />
-                        </Button>
+                        </ActionIcon>
                     </div>
 
                     <div className="space-y-2">
@@ -192,8 +182,8 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                             <div key={item.id} className="flex items-center gap-2 group/item">
                                 <Checkbox
                                     checked={item.isCompleted}
-                                    onCheckedChange={(checked) => handleToggleStep(item.id, !!checked)}
-                                    className="h-4 w-4"
+                                    onChange={(e) => handleToggleStep(item.id, e.currentTarget.checked)}
+                                    size="sm"
                                 />
                                 <span className={cn(
                                     "text-sm flex-1",
@@ -201,33 +191,37 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                                 )}>
                                     {item.title}
                                 </span>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 opacity-0 group-hover/item:opacity-100"
+                                <ActionIcon
+                                    variant="subtle"
+                                    color="gray"
+                                    size="sm"
+                                    className="opacity-0 group-hover/item:opacity-100"
                                     onClick={() => handleDeleteStep(item.id)}
                                 >
                                     <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
+                                </ActionIcon>
                             </div>
                         ))}
                         <form onSubmit={handleAddStep} className="flex items-center gap-2">
                             <Plus className="h-4 w-4 text-primary" />
-                            <Input
+                            <TextInput
                                 placeholder="Stap toevoegen"
                                 value={newStepTitle}
-                                onChange={(e) => setNewStepTitle(e.target.value)}
-                                className="border-none p-0 text-sm focus-visible:ring-0 h-auto text-primary placeholder:text-primary/70"
+                                onChange={(e) => setNewStepTitle(e.currentTarget.value)}
+                                variant="unstyled"
+                                className="flex-1"
+                                styles={{ input: { fontSize: '14px', color: 'var(--mantine-color-primary-6)' } }}
                             />
                         </form>
                     </div>
-                </SheetHeader>
+                </div>
 
-                <Separator />
+                <div className="h-px bg-border my-4" />
 
                 <div className="space-y-1">
                     <Button
-                        variant="ghost"
+                        variant="subtle"
+                        color={optimisticTask!.isMyDay ? "blue" : "gray"}
                         className={cn(
                             "w-full justify-start gap-3 h-12 font-normal",
                             optimisticTask!.isMyDay ? "text-primary" : "text-muted-foreground"
@@ -263,26 +257,26 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                             })
                         }}
                     />
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-start gap-3 h-12 font-normal">
+                    <Popover position="bottom-start" shadow="md">
+                        <Popover.Target>
+                            <Button variant="subtle" color="gray" className="w-full justify-start gap-3 h-12 font-normal">
                                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                                 {optimisticTask!.dueDateTime ? format(new Date(optimisticTask!.dueDateTime), "PPP") : "Vervaldatum toevoegen"}
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={optimisticTask!.dueDateTime ? new Date(optimisticTask!.dueDateTime) : undefined}
-                                onSelect={(date) => {
+                        </Popover.Target>
+                        <Popover.Dropdown p={0}>
+                            <DatePicker
+                                value={optimisticTask!.dueDateTime ? new Date(optimisticTask!.dueDateTime) : null}
+                                // @ts-expect-error Mantine DatePicker type mismatch in this specific environment
+                                onChange={(date: Date | null) => {
                                     startTransition(() => {
                                         setOptimisticTask({ dueDateTime: date || null })
                                         updateTask(optimisticTask!.id, { dueDateTime: date || null })
                                     })
                                 }}
-                                initialFocus
+                                locale="nl"
                             />
-                        </PopoverContent>
+                        </Popover.Dropdown>
                     </Popover>
 
                     <ProjectSelector
@@ -296,20 +290,22 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                     />
                 </div>
 
-                <Separator />
+                <div className="h-px bg-border my-4" />
 
                 <div className="flex-1 flex flex-col">
                     <Textarea
                         placeholder="Notitie toevoegen"
                         value={body}
-                        onChange={(e) => setBody(e.target.value)}
+                        onChange={(e) => setBody(e.currentTarget.value)}
                         onBlur={handleBodyBlur}
-                        className="flex-1 min-h-[200px] border-none resize-none focus-visible:ring-0 p-0 text-sm placeholder:text-muted-foreground"
+                        variant="unstyled"
+                        className="flex-1 min-h-[200px]"
+                        styles={{ input: { height: '100%', fontSize: '14px' } }}
                     />
                 </div>
             </div>
 
-            <SheetFooter className="p-4 bg-muted/30 border-t flex items-center justify-between sticky bottom-0 left-0 right-0 z-50">
+            <div className="p-4 bg-muted/30 border-t flex items-center justify-between sticky bottom-0 left-0 right-0 z-50">
                 <div className="flex flex-col gap-1">
                     <span className="text-[10px] text-muted-foreground italic">
                         Bijgewerkt op {format(new Date(), "PP")}
@@ -320,13 +316,11 @@ export function TaskDetailSheet({ task: initialTask }: { task: Task | null }) {
                         </span>
                     )}
                 </div>
-                <SheetClose asChild>
-                    <Button variant="ghost" className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 shadow-lg">
-                        <ChevronRight className="h-4 w-4" />
-                        Back
-                    </Button>
-                </SheetClose>
-            </SheetFooter>
-        </SheetContent>
+                <Button variant="filled" color="blue" onClick={onClose} className="flex items-center gap-2 shadow-lg">
+                    <ChevronRight className="h-4 w-4" />
+                    Back
+                </Button>
+            </div>
+        </div>
     )
 }

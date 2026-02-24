@@ -3,19 +3,8 @@
 import * as React from "react"
 import { Check, ChevronsUpDown, Briefcase } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Button, TextInput, Popover, UnstyledButton, Stack, ScrollArea } from "@mantine/core"
 import { getProjects, createProjectAction } from "@/app/actions"
-import { Separator } from "@/components/ui/separator"
-import { Input } from "@/components/ui/input"
 import { Loader2, Plus } from "lucide-react"
 
 interface Project {
@@ -33,6 +22,7 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
     const [projects, setProjects] = React.useState<Project[]>([])
     const [isCreating, setIsCreating] = React.useState(false)
     const [newProjectName, setNewProjectName] = React.useState("")
+    const [searchQuery, setSearchQuery] = React.useState("")
     const [isLoading, setIsLoading] = React.useState(false)
 
     React.useEffect(() => {
@@ -61,33 +51,38 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
         }
     }
 
+    const filteredProjects = projects.filter(p => p.displayName.toLowerCase().includes(searchQuery.toLowerCase()))
+
     return (
-        <Popover open={open} onOpenChange={(val) => {
+        <Popover opened={open} onChange={(val) => {
             setOpen(val)
             if (!val) {
                 setIsCreating(false)
                 setNewProjectName("")
+                setSearchQuery("")
             }
-        }}>
-            <PopoverTrigger asChild>
+        }} width="target" position="bottom-start" shadow="md">
+            <Popover.Target>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
+                    color="gray"
                     role="combobox"
                     aria-expanded={open}
+                    onClick={() => setOpen((o) => !o)}
                     className="w-full justify-start gap-3 h-12 font-normal"
                 >
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                     {selectedProject ? selectedProject.displayName : "Project toevoegen"}
                     <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+            </Popover.Target>
+            <Popover.Dropdown p={0}>
                 {isCreating ? (
                     <div className="p-3 space-y-3">
-                        <Input
+                        <TextInput
                             placeholder="Project naam..."
                             value={newProjectName}
-                            onChange={(e) => setNewProjectName(e.target.value)}
+                            onChange={(e) => setNewProjectName(e.currentTarget.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
                             disabled={isLoading}
                             autoFocus
@@ -103,7 +98,8 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                             </Button>
                             <Button
                                 size="sm"
-                                variant="ghost"
+                                variant="subtle"
+                                color="gray"
                                 onClick={() => setIsCreating(false)}
                                 disabled={isLoading}
                             >
@@ -112,60 +108,73 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                         </div>
                     </div>
                 ) : (
-                    <Command>
-                        <CommandInput placeholder="Project zoeken..." />
-                        <CommandList>
-                            <CommandEmpty>Geen projecten gevonden.</CommandEmpty>
-                            <CommandGroup>
-                                <CommandItem
-                                    onSelect={() => {
-                                        onSelect(null)
-                                        setOpen(false)
-                                    }}
-                                    className="gap-2"
-                                >
-                                    <Check
-                                        className={cn(
-                                            "h-4 w-4",
-                                            currentProjectId === null ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    Geen project
-                                </CommandItem>
-                                {projects.map((project) => (
-                                    <CommandItem
-                                        key={project.id}
-                                        value={`${project.displayName}-${project.id}`}
-                                        onSelect={() => {
-                                            onSelect(project.id)
+                    <Stack gap={0}>
+                        <TextInput
+                            placeholder="Project zoeken..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                            variant="unstyled"
+                            p="sm"
+                            className="border-b"
+                            autoFocus
+                        />
+                        <ScrollArea.Autosize mah={250}>
+                            {filteredProjects.length === 0 ? (
+                                <div className="p-4 text-sm text-center text-muted-foreground">Geen projecten gevonden.</div>
+                            ) : (
+                                <div className="p-1">
+                                    <UnstyledButton
+                                        onClick={() => {
+                                            onSelect(null)
                                             setOpen(false)
                                         }}
-                                        className="gap-2"
+                                        className={cn(
+                                            "w-full flex items-center gap-2 p-2 rounded-sm text-sm hover:bg-muted/50 transition-colors",
+                                        )}
                                     >
                                         <Check
                                             className={cn(
                                                 "h-4 w-4",
-                                                currentProjectId === project.id ? "opacity-100" : "opacity-0"
+                                                currentProjectId === null ? "opacity-100" : "opacity-0"
                                             )}
                                         />
-                                        {project.displayName}
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                            <Separator />
-                            <CommandGroup>
-                                <CommandItem
-                                    onSelect={() => setIsCreating(true)}
-                                    className="gap-2 text-primary"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Nieuw project aanmaken
-                                </CommandItem>
-                            </CommandGroup>
-                        </CommandList>
-                    </Command>
+                                        Geen project
+                                    </UnstyledButton>
+                                    {filteredProjects.map((project) => (
+                                        <UnstyledButton
+                                            key={project.id}
+                                            onClick={() => {
+                                                onSelect(project.id)
+                                                setOpen(false)
+                                            }}
+                                            className={cn(
+                                                "w-full flex items-center gap-2 p-2 rounded-sm text-sm hover:bg-muted/50 transition-colors",
+                                            )}
+                                        >
+                                            <Check
+                                                className={cn(
+                                                    "h-4 w-4",
+                                                    currentProjectId === project.id ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {project.displayName}
+                                        </UnstyledButton>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea.Autosize>
+                        <div className="border-t p-1">
+                            <UnstyledButton
+                                onClick={() => setIsCreating(true)}
+                                className="w-full flex items-center gap-2 p-2 rounded-sm text-sm text-primary hover:bg-muted/50 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Nieuw project aanmaken
+                            </UnstyledButton>
+                        </div>
+                    </Stack>
                 )}
-            </PopoverContent>
+            </Popover.Dropdown>
         </Popover>
     )
 }

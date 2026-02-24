@@ -5,20 +5,8 @@ import { format } from "date-fns"
 import { nl } from "date-fns/locale"
 import { Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import { Button, Popover, Select } from "@mantine/core"
+import { DatePicker } from "@mantine/dates"
 
 interface ReminderPickerProps {
     date?: Date | null
@@ -27,10 +15,11 @@ interface ReminderPickerProps {
 
 export function ReminderPicker({ date, onChange }: ReminderPickerProps) {
     return (
-        <Popover>
-            <PopoverTrigger asChild>
+        <Popover position="bottom-start" shadow="md" width="target">
+            <Popover.Target>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
+                    color="gray"
                     className={cn(
                         "w-full justify-start gap-3 h-12 font-normal",
                         !date && "text-muted-foreground"
@@ -48,17 +37,17 @@ export function ReminderPicker({ date, onChange }: ReminderPickerProps) {
                         "Herinner mij"
                     )}
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            </Popover.Target>
+            <Popover.Dropdown p={0}>
                 <ReminderPickerContent date={date} onChange={onChange} />
-            </PopoverContent>
+            </Popover.Dropdown>
         </Popover>
     )
 }
 
 export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
-    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-        date ? new Date(date) : undefined
+    const [selectedDate, setSelectedDate] = React.useState<Date | null>(
+        date ? new Date(date) : null
     )
     const [selectedTime, setSelectedTime] = React.useState<string>(
         date ? format(date, "HH:mm") : "09:00"
@@ -76,7 +65,7 @@ export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
         return options
     }, [])
 
-    const handleDateSelect = (newDate: Date | undefined) => {
+    const handleDateSelect = (newDate: Date | null) => {
         setSelectedDate(newDate)
         updateDateTime(newDate, selectedTime)
     }
@@ -86,7 +75,7 @@ export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
         updateDateTime(selectedDate, newTime)
     }
 
-    const updateDateTime = (d: Date | undefined, t: string) => {
+    const updateDateTime = (d: Date | null | undefined, t: string) => {
         if (!d) return
 
         const [hours, minutes] = t.split(":").map(Number)
@@ -101,31 +90,26 @@ export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
                 <h4 className="text-sm font-medium leading-none">Datum & Tijd</h4>
                 <p className="text-xs text-muted-foreground">Stel een herinnering in voor deze taak.</p>
             </div>
-            <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                initialFocus
-                locale={nl}
+            <DatePicker
+                value={selectedDate}
+                // @ts-expect-error Mantine DatePicker type mismatch in this specific environment
+                onChange={handleDateSelect}
+                locale="nl"
+                defaultDate={selectedDate || new Date()}
             />
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium mr-auto">Tijd</span>
-                <Select value={selectedTime} onValueChange={handleTimeSelect}>
-                    <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Tijd" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {timeOptions.map((time) => (
-                            <SelectItem key={time} value={time}>
-                                {time}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <Select
+                    value={selectedTime}
+                    onChange={(val) => val && handleTimeSelect(val)}
+                    data={timeOptions.map(t => ({ value: t, label: t }))}
+                    className="w-[120px]"
+                />
             </div>
             {date && (
                 <Button
                     variant="outline"
+                    color="gray"
                     className="w-full text-xs h-8"
                     onClick={() => onChange(null)}
                 >

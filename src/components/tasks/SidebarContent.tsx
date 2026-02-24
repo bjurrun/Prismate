@@ -14,15 +14,7 @@ import {
     Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
-import {
-    Sheet,
-    SheetContent,
-    SheetTitle,
-} from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { VisuallyHidden } from "@/components/ui/visually-hidden"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { TextInput, Button, ActionIcon, ScrollArea, Drawer } from "@mantine/core"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { syncTasksAction } from "@/app/actions"
@@ -68,8 +60,11 @@ export function SidebarContent({ projects, open, onOpenChange, isCollapsed }: Si
         <div className="flex flex-col h-full bg-background md:bg-muted/10">
             <div className="p-4 pt-12 md:pt-4">
                 <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Zoeken" className="pl-8 h-9 bg-background border-border/50 focus-visible:ring-1" />
+                    <TextInput
+                        placeholder="Zoeken"
+                        leftSection={<Search className="h-4 w-4 text-muted-foreground" />}
+                        className="w-full"
+                    />
                 </div>
             </div>
 
@@ -133,6 +128,7 @@ export function SidebarContent({ projects, open, onOpenChange, isCollapsed }: Si
             <footer className="p-4 border-t flex flex-col gap-4">
                 <Button
                     variant="outline"
+                    color="gray"
                     size="sm"
                     className="w-full justify-start gap-3 h-10 border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
                     onClick={handleSync}
@@ -165,24 +161,23 @@ export function SidebarContent({ projects, open, onOpenChange, isCollapsed }: Si
             </aside>
 
             {/* Mobile Sheet */}
-            <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent
-                    side="left"
-                    className="w-screen max-w-none sm:w-[350px] p-0 border-none"
-                    showCloseButton={false}
-                >
-                    <VisuallyHidden>
-                        <SheetTitle>Navigatiemenu</SheetTitle>
-                    </VisuallyHidden>
-                    <div className="absolute right-4 top-4 z-10">
-                        <Button variant="ghost" size="icon" onClick={closeSheet}>
-                            <X className="h-5 w-5" />
-                            <span className="sr-only">Sluiten</span>
-                        </Button>
-                    </div>
-                    {sidebarItems}
-                </SheetContent>
-            </Sheet>
+            <Drawer
+                opened={open || false}
+                onClose={closeSheet}
+                position="left"
+                size="100%"
+                title={<span className="sr-only">Navigatiemenu</span>}
+                padding={0}
+                withCloseButton={false}
+            >
+                <div className="absolute right-4 top-4 z-10">
+                    <ActionIcon variant="subtle" color="gray" size="lg" onClick={closeSheet}>
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Sluiten</span>
+                    </ActionIcon>
+                </div>
+                {sidebarItems}
+            </Drawer>
         </>
     )
 }

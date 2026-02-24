@@ -3,21 +3,7 @@
 import * as React from "react"
 import { Repeat } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
+import { Button, Checkbox, Popover, Select } from "@mantine/core"
 
 interface RecurrencePickerProps {
     value?: {
@@ -32,7 +18,8 @@ interface RecurrencePickerProps {
             type: string
         }
     } | null
-    onChange: (value: any | null) => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onChange: (recurrence: any | null) => void
 }
 
 const DAYS = [
@@ -72,10 +59,11 @@ export function RecurrencePicker({ value, onChange }: RecurrencePickerProps) {
     }
 
     return (
-        <Popover>
-            <PopoverTrigger asChild>
+        <Popover position="bottom-start" shadow="md" width="target">
+            <Popover.Target>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
+                    color="gray"
                     className={cn(
                         "w-full justify-start gap-3 h-12 font-normal",
                         currentType === "none" && "text-muted-foreground"
@@ -91,10 +79,10 @@ export function RecurrencePicker({ value, onChange }: RecurrencePickerProps) {
                         )}
                     </div>
                 </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start">
+            </Popover.Target>
+            <Popover.Dropdown p={0}>
                 <RecurrencePickerContent value={value} onChange={onChange} />
-            </PopoverContent>
+            </Popover.Dropdown>
         </Popover>
     )
 }
@@ -173,37 +161,33 @@ export function RecurrencePickerContent({ value, onChange }: RecurrencePickerPro
                 <p className="text-xs text-muted-foreground">Hoe vaak moet deze taak terugkeren?</p>
             </div>
 
-            <Select value={selectedType} onValueChange={handleTypeChange}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Selecteer herhaling" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="none">Niet herhalen</SelectItem>
-                    <SelectItem value="daily">Dagelijks</SelectItem>
-                    <SelectItem value="weekly">Wekelijks</SelectItem>
-                    <SelectItem value="monthly">Maandelijks</SelectItem>
-                    <SelectItem value="yearly">Jaarlijks</SelectItem>
-                    <SelectItem value="custom">Aangepast...</SelectItem>
-                </SelectContent>
-            </Select>
+            <Select
+                value={selectedType}
+                onChange={(val) => handleTypeChange(val || "none")}
+                data={[
+                    { value: "none", label: "Niet herhalen" },
+                    { value: "daily", label: "Dagelijks" },
+                    { value: "weekly", label: "Wekelijks" },
+                    { value: "monthly", label: "Maandelijks" },
+                    { value: "yearly", label: "Jaarlijks" },
+                    { value: "custom", label: "Aangepast..." },
+                ]}
+            />
 
             {selectedType === "custom" && (
-                <div className="space-y-3 pt-2 border-t">
-                    <Label className="text-xs font-semibold">Herhaal op</Label>
+                <div className="space-y-3 pt-2 border-t mt-4">
+                    <span className="text-xs font-semibold">Herhaal op</span>
                     <div className="grid grid-cols-4 gap-2">
                         {DAYS.map((day) => (
                             <div key={day.value} className="flex items-center space-x-2">
                                 <Checkbox
                                     id={`day-${day.value}`}
                                     checked={selectedDays.includes(day.value)}
-                                    onCheckedChange={() => toggleDay(day.value)}
+                                    onChange={() => toggleDay(day.value)}
+                                    label={day.label}
+                                    size="xs"
+                                    styles={{ label: { cursor: 'pointer', fontSize: '10px' } }}
                                 />
-                                <Label
-                                    htmlFor={`day-${day.value}`}
-                                    className="text-[10px] cursor-pointer"
-                                >
-                                    {day.label}
-                                </Label>
                             </div>
                         ))}
                     </div>
@@ -213,6 +197,7 @@ export function RecurrencePickerContent({ value, onChange }: RecurrencePickerPro
             {currentType !== "none" && (
                 <Button
                     variant="outline"
+                    color="gray"
                     className="w-full text-xs h-8 mt-2"
                     onClick={() => onChange(null)}
                 >

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GRIP Workspace: Daily Overview (Light Mode)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2060df",
+                        "primary-dark": "#1a4db5",
+                        "background-light": "#ffffff",
+                        "sidebar-light": "#f8fafc",
+                        "border-light": "#e2e8f0",
+                        "muted-text": "#64748b",
+                        "text-main": "#0f172a"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.375rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8fafc; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-background-light font-display text-text-main h-screen overflow-hidden flex selection:bg-primary/20 selection:text-primary">
+<aside class="w-[80px] lg:w-[260px] flex flex-col border-r border-border-light bg-sidebar-light flex-shrink-0 transition-all duration-300 z-30">
+<div class="h-16 flex items-center px-4 lg:px-6 border-b border-border-light">
+<div class="flex items-center gap-3">
+<div class="relative flex items-center justify-center size-8 rounded bg-primary text-white font-bold text-lg">
+                G
+            </div>
+<div class="hidden lg:flex flex-col">
+<h1 class="text-text-main text-base font-bold leading-none tracking-tight">GRIP</h1>
+<span class="text-[10px] text-muted-text mt-1 font-semibold uppercase tracking-wider">Workspace</span>
+</div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
+<a class="group flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-[20px] lg:text-[22px]">calendar_today</span>
+<span class="hidden lg:block text-sm font-semibold">Daily View</span>
+</a>
+<a class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-text hover:bg-slate-200/50 hover:text-text-main transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] lg:text-[22px]">calendar_view_week</span>
+<span class="hidden lg:block text-sm font-medium">This Week</span>
+</a>
+<a class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-text hover:bg-slate-200/50 hover:text-text-main transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] lg:text-[22px]">calendar_month</span>
+<span class="hidden lg:block text-sm font-medium">Year Goals</span>
+</a>
+<div class="my-4 border-t border-border-light mx-2"></div>
+<div class="hidden lg:block px-3 pb-2 text-[10px] font-bold text-muted-text uppercase tracking-widest">Projects</div>
+<a class="group flex items-center gap-3 px-3 py-2 rounded-lg text-muted-text hover:bg-slate-200/50 hover:text-text-main transition-colors" href="#">
+<span class="w-2 h-2 rounded-full bg-purple-500"></span>
+<span class="hidden lg:block text-sm font-medium">Alpha Design</span>
+</a>
+<a class="group flex items-center gap-3 px-3 py-2 rounded-lg text-muted-text hover:bg-slate-200/50 hover:text-text-main transition-colors" href="#">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="hidden lg:block text-sm font-medium">Marketing Q3</span>
+</a>
+</nav>
+<div class="p-4 border-t border-border-light">
+<button class="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-200/50 transition-colors text-left">
+<div class="size-9 rounded-full bg-slate-200 overflow-hidden relative border border-border-light">
+<img alt="User Profile" class="object-cover w-full h-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXgpgIMGQ3KKBOtRHYINh8h6Iighr8IZNET0j4eUTx6HzQVmxzSIr1qVUPhx_4G4DLf5qEyQU_O-2ez7QjNa9CCtkcLrak31tfiFubQGkczI1Jt-EA90gzP2IwOQPec5ffAVJe3gYnF0QJnpki8KlnNlg_1q4GUKTMFReErXpSr1hTEkNpTBjONxWNuL0nsLvImEIxY24GtTWmAqCYorimvAQmin580szzHH5SCBNWkPaK88SMRCiyDcy7eAirslrVYizvnQHs2NIG"/>
+</div>
+<div class="hidden lg:flex flex-col overflow-hidden">
+<span class="text-sm font-semibold text-text-main truncate">Alex Designer</span>
+<span class="text-[10px] text-muted-text truncate font-medium uppercase tracking-tighter">Pro Plan</span>
+</div>
+<div class="hidden lg:block ml-auto text-muted-text">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</div>
+</button>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-full relative overflow-hidden bg-white">
+<header class="h-16 border-b border-border-light flex items-center justify-between px-6 bg-white z-20">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold text-text-main tracking-tight">Daily Overview</h2>
+<div class="h-4 w-px bg-border-light"></div>
+<div class="flex items-center gap-2 text-muted-text text-sm">
+<button class="hover:text-text-main transition-colors"><span class="material-symbols-outlined text-lg">chevron_left</span></button>
+<span class="text-text-main font-semibold uppercase tracking-tight">Monday 24, October</span>
+<button class="hover:text-text-main transition-colors"><span class="material-symbols-outlined text-lg">chevron_right</span></button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-light bg-slate-50 text-muted-text text-xs mr-2">
+<span class="material-symbols-outlined text-[14px]">search</span>
+<span>Press <kbd class="font-sans font-semibold text-text-main">⌘K</kbd> to search</span>
+</div>
+<button class="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="hidden sm:inline">New Task</span>
+</button>
+<div class="w-px h-6 bg-border-light mx-1"></div>
+<button class="text-muted-text hover:text-text-main transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+</button>
+</div>
+</header>
+<div class="flex-1 flex overflow-hidden">
+<section class="flex-1 min-w-[320px] max-w-[65%] border-r border-border-light flex flex-col bg-white relative">
+<div class="flex border-b border-border-light sticky top-0 bg-white/80 backdrop-blur-sm z-10 pl-16 pr-4 py-3 items-center justify-between">
+<div>
+<span class="text-[10px] font-bold text-primary uppercase tracking-widest block">Daily Timeline</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-xs text-muted-text hover:text-text-main font-bold px-2 py-1 rounded bg-slate-100 transition-colors">Today</button>
+<button class="text-muted-text hover:text-text-main p-1 transition-colors">
+<span class="material-symbols-outlined text-lg">settings</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto relative custom-scrollbar">
+<div class="absolute w-full z-10 flex items-center pointer-events-none" style="top: 340px;">
+<div class="w-14 text-right pr-2 text-xs font-bold text-red-500">10:45</div>
+<div class="flex-1 h-[2px] bg-red-500 relative">
+<div class="absolute -left-1 -top-[3px] size-2 rounded-full bg-red-500 shadow-sm"></div>
+</div>
+</div>
+<div class="relative min-h-[1200px] py-4">
+<div class="absolute inset-0 pointer-events-none">
+<div class="flex h-[120px] border-b border-slate-100">
+<div class="w-16 flex-shrink-0 text-right pr-4 text-[10px] text-muted-text pt-2 font-bold">08:00 AM</div>
+<div class="flex-1"></div>
+</div>
+<div class="flex h-[120px] border-b border-slate-100">
+<div class="w-16 flex-shrink-0 text-right pr-4 text-[10px] text-muted-text pt-2 font-bold">09:00 AM</div>
+<div class="flex-1"></div>
+</div>
+<div class="flex h-[120px] border-b border-slate-100">
+<div class="w-16 flex-shrink-0 text-right pr-4 text-[10px] text-muted-text pt-2 font-bold">10:00 AM</div>
+<div class="flex-1"></div>
+</div>
+<div class="flex h-[120px] border-b border-slate-100">
+<div class="w-16 flex-shrink-0 text-right pr-4 text-[10px] text-muted-text pt-2 font-bold">11:00 AM</div>
+<div class="flex-1"></div>
+</div>
+<div class="flex h-[120px] border-b border-slate-100">
+<div class="w-16 flex-shrink-0 text-right pr-4 text-[10px] text-muted-text pt-2 font-bold">12:00 PM</div>
+<div class="flex-1"></div>
+</div>
+</div>
+<div class="pl-16 pr-4 relative h-full">
+<div class="absolute top-[120px] left-16 right-4 h-[240px] bg-blue-50 border border-blue-200 border-l-4 border-l-primary rounded-r-lg p-4 hover:bg-blue-100/80 transition-all cursor-pointer group">
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[16px] text-primary">center_focus_strong</span>
+<span class="text-[10px] uppercase font-bold text-primary tracking-wider">Focus Block</span>
+</div>
+<h4 class="text-sm font-bold text-text-main mb-1">Deep Work: Project Alpha Design</h4>
+<div class="flex items-center gap-2 text-xs text-slate-600 mb-3">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+                                        09:00 - 11:00
+                                    </div>
+<div class="flex gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-primary border border-primary/20">Priority High</span>
+</div>
+</div>
+<button class="text-muted-text hover:text-text-main opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="absolute top-[420px] left-16 right-4 h-[70px] bg-emerald-50 border border-emerald-200 border-l-4 border-l-emerald-500 rounded-r-lg p-3 hover:bg-emerald-100/80 transition-all cursor-pointer group">
+<div class="flex justify-between items-center h-full">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined text-[20px]">videocam</span>
+</div>
+<div class="flex flex-col">
+<h4 class="text-sm font-bold text-text-main">Client Sync: Weekly Update</h4>
+<span class="text-xs text-slate-600">11:30 - 12:00 • Zoom Meeting</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<img alt="Attendee 1" class="w-6 h-6 rounded-full border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7oK8uzxUPyTfU3afmAb8iXI4N0ia7v2UOObqFr3_jK4_E59pAumx1sTZR-8WiRsv4neVKMBeAidWfDpYlSFh5xFciRsuh8lehGEFM-Ri4kBNRq5CJqiSuxHCX8ZbYmbI5MgTlDbIi4QVwSSOwv2_NmrDxEdaZqtPedc6ha4p2PLm55tmZjkyRfud9QnU6xK-nwF1Ht2YkPagaMIMaGl4wszUnax5HtoYrv3fXV-yIFScvYYQlrhvqsWytFHgpvMQ2Bg7guh3jzNnb"/>
+<img alt="Attendee 2" class="w-6 h-6 rounded-full border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC84QJ4041PBliTh_H2gFAZo1v6u7HxOWH03jdVQRe8J3rFXdaWLMYc8QJsGEOdumAhgxbMVJHuJN0Jyxo0aPikpJnGPzJNeqf0do_EpHPgCjAnLz385Nl6flhb9ZzZIHn2pfWJi11ValSgRzngYqR4UR1S4HIiV3GlOf6A-0CbGAVTpoSQ9k8g38qVuKnLn1YUgcOVNhJsrS5J54WqFhj5tvnYmPkLOD356lrRxe3W22aKhY3ZAY1wCMZKQv5I2gXQKQb3U-rddLVL"/>
+</div>
+<button class="text-muted-text hover:text-text-main opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+</div>
+<div class="absolute top-[520px] left-16 right-4 h-[100px] border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-all cursor-pointer group bg-slate-50/50">
+<div class="flex items-center gap-2 text-muted-text group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-sm font-semibold">Schedule Focus Block</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-[400px] flex-shrink-0 flex flex-col bg-sidebar-light border-l border-border-light shadow-sm z-20">
+<div class="px-6 pt-6 pb-2">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-text-main font-bold text-lg tracking-tight">Tasks</h3>
+<div class="flex gap-1">
+<button class="p-1.5 rounded-md hover:bg-slate-200 text-muted-text hover:text-text-main transition-colors">
+<span class="material-symbols-outlined text-[20px]">sort</span>
+</button>
+<button class="p-1.5 rounded-md hover:bg-slate-200 text-muted-text hover:text-text-main transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+</div>
+</div>
+<div class="flex p-1 bg-slate-200/50 rounded-lg border border-slate-200">
+<button class="flex-1 py-1.5 px-3 rounded-md text-sm font-bold bg-white text-text-main shadow-sm border border-slate-200 transition-all text-center">
+                        Daily Focus
+                    </button>
+<button class="flex-1 py-1.5 px-3 rounded-md text-sm font-semibold text-muted-text hover:text-text-main transition-colors text-center">
+                        Backlog
+                    </button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 custom-scrollbar">
+<div class="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-2 mt-1">Priority Today</div>
+<div class="group bg-white border border-border-light hover:border-primary/30 rounded-xl p-4 transition-all hover:shadow-md cursor-pointer">
+<div class="flex items-start gap-3">
+<div class="mt-0.5">
+<div class="size-5 rounded border-2 border-slate-300 bg-white flex items-center justify-center hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-primary text-[14px] opacity-0 group-hover:opacity-100">check</span>
+</div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-text-main leading-tight mb-2">Finalize UI mockups for Dashboard</h4>
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 border border-red-200 uppercase">Urgent</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-600 border border-purple-200 uppercase">Design</span>
+<div class="flex items-center gap-1 text-[10px] text-muted-text ml-auto font-medium">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>2h</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white border border-border-light hover:border-primary/30 rounded-xl p-4 transition-all hover:shadow-md cursor-pointer">
+<div class="flex items-start gap-3">
+<div class="mt-0.5">
+<div class="size-5 rounded border-2 border-slate-300 bg-white flex items-center justify-center hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-primary text-[14px] opacity-0 group-hover:opacity-100">check</span>
+</div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-text-main leading-tight mb-2">Prepare invoice for Client X</h4>
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-600 border border-blue-200 uppercase">Admin</span>
+<div class="flex items-center gap-1 text-[10px] text-muted-text ml-auto font-medium">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>30m</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-2 mt-6">Up Next</div>
+<div class="group bg-white border border-border-light hover:border-primary/30 rounded-xl p-4 transition-all hover:shadow-md cursor-pointer opacity-70 hover:opacity-100">
+<div class="flex items-start gap-3">
+<div class="mt-0.5">
+<div class="size-5 rounded border-2 border-slate-300 bg-white flex items-center justify-center"></div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-text-main leading-tight mb-2">Review quarterly goals</h4>
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-600 border border-emerald-200 uppercase">Strategy</span>
+<div class="flex items-center gap-1 text-[10px] text-muted-text ml-auto font-medium">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>1h</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white border border-border-light hover:border-primary/30 rounded-xl p-4 transition-all hover:shadow-md cursor-pointer opacity-70 hover:opacity-100">
+<div class="flex items-start gap-3">
+<div class="mt-0.5">
+<div class="size-5 rounded border-2 border-slate-300 bg-white flex items-center justify-center"></div>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-semibold text-text-main leading-tight mb-2">Email catch-up</h4>
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase">Routine</span>
+<div class="flex items-center gap-1 text-[10px] text-muted-text ml-auto font-medium">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>45m</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-border-light bg-sidebar-light">
+<div class="relative group">
+<input class="w-full bg-white border-slate-200 rounded-xl py-3 pl-4 pr-12 text-sm text-text-main placeholder-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none" placeholder="Add a task to Daily Focus..." type="text"/>
+<button class="absolute right-2 top-2 size-9 flex items-center justify-center rounded-lg bg-primary text-white hover:bg-primary-dark transition-all">
+<span class="material-symbols-outlined text-[20px]">keyboard_return</span>
+</button>
+</div>
+<div class="mt-2 flex items-center justify-between px-1">
+<span class="text-[10px] text-muted-text font-bold uppercase tracking-tight">4 Tasks remaining</span>
+<span class="text-[10px] text-muted-text font-bold uppercase tracking-tight">Est. 4h 15m</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+
+</body></html>
