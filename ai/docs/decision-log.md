@@ -324,3 +324,8 @@
 
 - **Besluit**: Gebruik van het werkelijke Task ID in plaats van een tijdelijk ID voor de optimistische state update in `handleDropFromOutside`.
 - **Rationale**: Voorkomen van PrismaClientKnownRequestError bij het direct resizen van een zojuist gesleepte taak in de kalender.
+
+## [2026-03-01] Theme Toggle Switch naar Mantine Switch
+
+- **Besluit**: De ThemeToggle button is vervangen door een Mantine `Switch` component met `thumbIcon`.
+- **Rationale**: Verbetering van de visuele feedback en interactie in de sidebar, waarbij de actieve modus (Sun/Moon) direct in de switch thumb zichtbaar is conform de Mantine documentatie.
