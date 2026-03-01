@@ -327,5 +327,5 @@
 
 ## [2026-03-01] Theme Toggle Switch naar Mantine Switch
 
-- **Besluit**: De ThemeToggle button is vervangen door een Mantine `Switch` component met `thumbIcon`.
+- **Besluit**: De ThemeToggle button is vervangen door een Mantine `Switch` component met `thumbIcon`, volledig gestileerd in indigo tinten en verfijnde iconen (1.2pt stroke).
 - **Rationale**: Verbetering van de visuele feedback en interactie in de sidebar, waarbij de actieve modus (Sun/Moon) direct in de switch thumb zichtbaar is conform de Mantine documentatie.

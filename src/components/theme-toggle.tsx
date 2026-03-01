@@ -16,8 +16,10 @@ export function ThemeToggle() {
     return (
       <Switch
         size="md"
-        color="indigo.4"
-        styles={{ thumb: { display: 'flex', alignItems: 'center', justifyContent: 'center' } }}
+        styles={{ 
+          track: { backgroundColor: 'var(--mantine-color-indigo-5)', border: 'none' },
+          thumb: { display: 'flex', alignItems: 'center', justifyContent: 'center' } 
+        }}
       />
     );
   }
@@ -28,22 +30,24 @@ export function ThemeToggle() {
         checked={dark}
         onChange={() => toggleColorScheme()}
         size="md"
-        color="indigo.4"
         thumbIcon={
           dark ? (
-            <MoonIcon className="size-[12px] text-indigo-600" strokeWidth={3} />
+            <MoonIcon className="size-[12px] text-indigo-700" strokeWidth={1.2} />
           ) : (
-            <SunIcon className="size-[12px] text-yellow-500" strokeWidth={3} />
+            <SunIcon className="size-[12px] text-indigo-700" strokeWidth={1.2} />
           )
         }
         styles={{
           track: {
             cursor: 'pointer',
+            backgroundColor: dark ? 'var(--mantine-color-indigo-3)' : 'var(--mantine-color-indigo-5)',
+            border: 'none',
           },
           thumb: {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            backgroundColor: 'var(--mantine-color-white)',
           }
         }}
       />
