@@ -1,11 +1,11 @@
 'use client'
+import { IconBell } from "@tabler/icons-react";
 
 import * as React from "react"
 import { format } from "date-fns"
 import { nl } from "date-fns/locale"
-import { Bell } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button, Popover, Select } from "@mantine/core"
+
+import { Button, Popover, Select, Text, Group, Stack } from "@mantine/core"
 import { DatePicker } from "@mantine/dates"
 
 interface ReminderPickerProps {
@@ -15,27 +15,28 @@ interface ReminderPickerProps {
 
 export function ReminderPicker({ date, onChange }: ReminderPickerProps) {
     return (
-        <Popover position="bottom-start" shadow="md" width="target">
+        <Popover position="bottom-end" shadow="md" width={350}>
             <Popover.Target>
                 <Button
                     variant="subtle"
-                    color="gray"
-                    className={cn(
-                        "w-full justify-start gap-3 h-12 font-normal",
-                        !date && "text-muted-foreground"
-                    )}
+                    c="var(--mantine-color-text)"
+                    fw={400}
+                    justify="flex-start"
+                    className="w-full h-14 font-normal rounded-none px-4"
                 >
-                    <Bell className="h-4 w-4" />
-                    {date ? (
-                        <div className="flex flex-col items-start leading-tight">
-                            <span className="text-sm">Herinner mij op</span>
-                            <span className="text-[10px] text-primary">
-                                {format(date, "PPP 'om' HH:mm", { locale: nl })}
-                            </span>
-                        </div>
-                    ) : (
-                        "Herinner mij"
-                    )}
+                    <Group gap="xl" wrap="nowrap">
+                        <IconBell className="h-4 w-4 shrink-0" />
+                        {date ? (
+                            <Stack gap={0} align="flex-start" style={{ lineHeight: 1.25, minWidth: 0 }}>
+                                <Text size="sm" truncate className="w-full">Herinner mij op</Text>
+                                <Text size="xs" c="primary" truncate className="w-full">
+                                    {format(date, "d MMM, HH:mm", { locale: nl })}
+                                </Text>
+                            </Stack>
+                        ) : (
+                            <span>Herinner mij</span>
+                        )}
+                    </Group>
                 </Button>
             </Popover.Target>
             <Popover.Dropdown p={0}>
@@ -85,27 +86,26 @@ export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
     }
 
     return (
-        <div className="p-4 flex flex-col gap-4">
-            <div className="space-y-2">
-                <h4 className="text-sm font-medium leading-none">Datum & Tijd</h4>
-                <p className="text-xs text-muted-foreground">Stel een herinnering in voor deze taak.</p>
-            </div>
+        <Stack p="md" gap="md">
+            <Stack gap="xs">
+                <Text size="sm" fw={500} className="leading-none">Datum & Tijd</Text>
+                <Text size="xs" c="dimmed">Stel een herinnering in voor deze taak.</Text>
+            </Stack>
             <DatePicker
                 value={selectedDate}
-                // @ts-expect-error Mantine DatePicker type mismatch in this specific environment
+		// @ts-expect-error type mismatch mantine
                 onChange={handleDateSelect}
-                locale="nl"
-                defaultDate={selectedDate || new Date()}
+		defaultDate={selectedDate || new Date()}
             />
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium mr-auto">Tijd</span>
+            <Group gap="xs">
+                <Text size="sm" fw={500} className="mr-auto">Tijd</Text>
                 <Select
                     value={selectedTime}
                     onChange={(val) => val && handleTimeSelect(val)}
                     data={timeOptions.map(t => ({ value: t, label: t }))}
                     className="w-[120px]"
                 />
-            </div>
+            </Group>
             {date && (
                 <Button
                     variant="outline"
@@ -116,6 +116,6 @@ export function ReminderPickerContent({ date, onChange }: ReminderPickerProps) {
                     Herinnering verwijderen
                 </Button>
             )}
-        </div>
+        </Stack>
     )
 }

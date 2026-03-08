@@ -1,15 +1,17 @@
+import { Title, Text, Container, Paper } from "@mantine/core"
+
 export default function WeekReviewPage() {
     return (
-        <div className="space-y-6 sm:space-y-8">
-            <header className="flex flex-col gap-4">
+        <Container fluid p="xl">
+            <header className="flex flex-col gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Week Review</h1>
-                    <p className="text-gray-500 text-sm sm:text-base">Kijk terug op je afgelopen week.</p>
+                    <Title order={1} size="h2">Week Review</Title>
+                    <Text size="sm" c="dimmed">Kijk terug op je afgelopen week.</Text>
                 </div>
             </header>
-            <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed rounded-xl border-gray-200">
-                <p className="text-gray-500">Hier komt de week review.</p>
-            </div>
-        </div>
+            <Paper withBorder p="xl" radius="md" bg="var(--mantine-color-gray-0)" className="min-h-[400px] flex items-center justify-center border-dashed">
+                <Text c="dimmed">Hier komt de week review.</Text>
+            </Paper>
+        </Container>
     )
 }

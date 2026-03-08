@@ -4,6 +4,21 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@clerk/nextjs/server"
 import { fetchFromGraph, mutateGraph } from "@/lib/microsoft"
 import { revalidatePath } from "next/cache"
+import { saveMarkdownNote, deleteMarkdownNote } from "@/lib/notes-fs"
+import matter from "gray-matter"
+
+export async function updateNotesDirectory(directoryPath: string) {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Not authenticated");
+
+    await prisma.user.update({
+        where: { id: userId },
+        data: { notesDirectoryPath: directoryPath }
+    });
+    
+    revalidatePath('/settings');
+    revalidatePath('/notes');
+}
 
 export async function createProjectAction(name: string) {
     const { userId } = await auth()
@@ -41,22 +56,19 @@ export async function getProjects() {
     if (!userId) return []
 
     try {
-        // 1. Haal de laatste lijstjes op van Microsoft
+        // COMMENTED OUT FOR PERFORMANCE: Syncing on every page load causes significant lag
+        /*
         const listsData = await fetchFromGraph("/me/todo/lists")
         const microsoftLists = listsData.value as { id: string; displayName: string; wellKnownListName: string }[]
 
-        // 2. Synchroniseer met lokale Prisma DB (Upsert)
-        // We mappen Microsoft Lists naar onze Projecten
         for (const list of microsoftLists) {
-            // Sla standaardlijsten zoals "Tasks" of "Flagged Emails" eventueel over als je die niet als project wilt
-            // Maar de user vroeg specifiek om "al bestaande lijsten", dus we pakken ze allemaal.
             await prisma.project.upsert({
                 where: {
                     microsoftId: list.id
                 },
                 update: {
                     displayName: list.displayName,
-                    clerkUserId: userId // Ensure it's for this user
+                    clerkUserId: userId
                 },
                 create: {
                     displayName: list.displayName,
@@ -65,6 +77,7 @@ export async function getProjects() {
                 }
             })
         }
+        */
     } catch (error) {
         console.error("⚠️ Kon Microsoft projecten niet synchroniseren:", error)
     }
@@ -86,7 +99,9 @@ export async function getTasksAction(filter?: string, projectId?: string) {
 
     if (filter === 'important') where.isImportant = true
     if (filter === 'myday') where.isMyDay = true
+    if (filter === 'ordered') where.dueDateTime = { not: null } // whatever other filters
     if (filter === 'planned') where.dueDateTime = { not: null }
+    if (filter === 'someday') where.isSomeday = true
     if (projectId) where.projectId = projectId
 
     return await prisma.task.findMany({
@@ -113,6 +128,9 @@ export async function addTask(formData: FormData) {
     const dueDateTimeStr = formData.get("dueDateTime") as string | null;
     const reminderDateTimeStr = formData.get("reminderDateTime") as string | null;
     const recurrenceStr = formData.get("recurrence") as string | null;
+    const isImportant = formData.get("isImportant") === "true";
+    const isMyDay = formData.get("isMyDay") === "true";
+    const isSomeday = formData.get("isSomeday") === "true";
 
     if (!title || !userId) return;
 
@@ -124,7 +142,10 @@ export async function addTask(formData: FormData) {
         data: {
             title,
             clerkUserId: userId,
-            importance: "normal",
+            importance: isImportant ? "high" : "normal",
+            isImportant,
+            isMyDay,
+            isSomeday,
             status: "notStarted",
             projectId: projectId || null,
             dueDateTime,
@@ -286,29 +307,21 @@ export async function toggleTaskStatus(taskId: string, isCompleted: boolean) {
     // 2. Microsoft Sync (indien gekoppeld)
     if (task.microsoftId) {
         try {
-            const lists = await fetchFromGraph("/me/todo/lists")
-            const defaultList =
-                lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
-                lists.value[0];
-
-            if (!defaultList) {
-                console.warn("⚠️ Geen Microsoft To Do lijst gevonden voor status update.");
-                return;
+            const listId = await getMicrosoftListId(task.projectId)
+            if (listId) {
+                await mutateGraph(
+                    `/me/todo/lists/${listId}/tasks/${task.microsoftId}`,
+                    "PATCH",
+                    { status: isCompleted ? "completed" : "notStarted" }
+                )
             }
-
-            await mutateGraph(
-                `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
-                "PATCH",
-                { status: isCompleted ? "completed" : "notStarted" }
-            )
         } catch (error) {
             console.error("❌ Microsoft status sync mislukt:", error)
-            // We draaien de lokale status NIET terug, om de UI flow niet te onderbreken.
-            // In een latere iteratie kunnen we een 'retry' of 'sync-error' vlag toevoegen.
         }
     }
+
+    // 3. Agenda Sync
+    await syncTaskToCalendar(taskId)
 
     revalidatePath("/")
 }
@@ -318,19 +331,41 @@ export async function updateTask(taskId: string, data: Partial<{
     status: string;
     importance: string;
     dueDateTime: Date | null;
+    startDateTime: Date | null;
     projectId: string | null;
     reminderDateTime: Date | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recurrence: any | null;
     isMyDay: boolean;
     myDayDate: Date | null;
+    isSomeday: boolean;
+    location: string | null;
+    attendees: any[] | null;
+    isTeamsMeeting: boolean;
 }>) {
     const { userId } = await auth()
     if (!userId) return
 
+    // Ensure all date strings from client are converted to Date objects for server-side logic
+    const parsedData = {
+        ...data,
+        dueDateTime: data.dueDateTime ? new Date(data.dueDateTime) : data.dueDateTime,
+        startDateTime: data.startDateTime ? new Date(data.startDateTime) : data.startDateTime,
+        reminderDateTime: data.reminderDateTime ? new Date(data.reminderDateTime) : data.reminderDateTime,
+        myDayDate: data.myDayDate ? new Date(data.myDayDate) : data.myDayDate,
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { projectId, recurrence, attendees, isTeamsMeeting, ...prismaData } = parsedData;
+
     const task = await prisma.task.update({
         where: { id: taskId },
-        data: data
+        data: {
+            ...prismaData,
+            projectId: parsedData.projectId !== undefined ? parsedData.projectId : undefined,
+            recurrence: parsedData.recurrence !== undefined ? parsedData.recurrence : undefined,
+            lastModifiedDateTime: new Date()
+        }
     })
 
     if (task.clerkUserId !== userId) {
@@ -339,25 +374,30 @@ export async function updateTask(taskId: string, data: Partial<{
 
     if (task.microsoftId) {
         try {
-            const lists = await fetchFromGraph("/me/todo/lists")
-            const defaultList =
-                lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
-                lists.value[0];
-
-            if (defaultList) {
+            const listId = await getMicrosoftListId(task.projectId)
+            if (listId) {
                 // Map local fields to Microsoft Graph fields if necessary
-                const graphUpdate: Record<string, string | { content: string; contentType: string } | null | { dateTime: string; timeZone: string }> = {}
+                const graphUpdate: any = {}
                 if (data.title) graphUpdate.title = data.title
                 if (data.body !== undefined) graphUpdate.body = { content: data.body, contentType: "text" }
                 if (data.importance) graphUpdate.importance = data.importance
                 if (data.status) graphUpdate.status = data.status
-                if (data.dueDateTime !== undefined) graphUpdate.dueDateTime = data.dueDateTime ? { dateTime: data.dueDateTime.toISOString(), timeZone: "UTC" } : null
+                if (parsedData.dueDateTime !== undefined) {
+                    const d = parsedData.dueDateTime instanceof Date ? parsedData.dueDateTime : (parsedData.dueDateTime ? new Date(parsedData.dueDateTime) : null);
+                    graphUpdate.dueDateTime = d ? { dateTime: d.toISOString(), timeZone: "UTC" } : null
+                }
                 if (data.recurrence !== undefined) graphUpdate.recurrence = data.recurrence
+                if (data.location !== undefined) graphUpdate.location = { displayName: data.location || "" }
+                if (data.attendees !== undefined) {
+                    graphUpdate.attendees = (data.attendees || []).map((email: string) => ({
+                        emailAddress: { address: email },
+                        type: "required"
+                    }))
+                }
+                if (data.isTeamsMeeting !== undefined) graphUpdate.isOnlineMeeting = data.isTeamsMeeting
 
                 await mutateGraph(
-                    `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
+                    `/me/todo/lists/${listId}/tasks/${task.microsoftId}`,
                     "PATCH",
                     graphUpdate
                 )
@@ -366,6 +406,9 @@ export async function updateTask(taskId: string, data: Partial<{
             console.error("❌ Microsoft update sync mislukt:", error)
         }
     }
+
+    // 3. Agenda Sync
+    await syncTaskToCalendar(taskId)
 
     revalidatePath("/")
 }
@@ -391,16 +434,10 @@ export async function scheduleTaskAction(taskId: string, startDateTime: Date) {
 
     if (task.microsoftId) {
         try {
-            const lists = await fetchFromGraph("/me/todo/lists")
-            const defaultList =
-                lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
-                lists.value[0];
-
-            if (defaultList) {
+            const listId = await getMicrosoftListId(task.projectId)
+            if (listId) {
                 await mutateGraph(
-                    `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
+                    `/me/todo/lists/${listId}/tasks/${task.microsoftId}`,
                     "PATCH",
                     {
                         dueDateTime: { dateTime: endDateTime.toISOString(), timeZone: "UTC" }
@@ -411,6 +448,9 @@ export async function scheduleTaskAction(taskId: string, startDateTime: Date) {
             console.error("❌ Microsoft schedule sync mislukt:", error)
         }
     }
+
+    // 3. Agenda Sync
+    await syncTaskToCalendar(taskId)
 
     revalidatePath("/")
     revalidatePath("/agenda")
@@ -429,22 +469,25 @@ export async function deleteTask(taskId: string) {
 
     if (task.microsoftId) {
         try {
-            const lists = await fetchFromGraph("/me/todo/lists")
-            const defaultList =
-                lists.value.find((l: { wellKnownListName: string }) => l.wellKnownListName === "defaultList") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "tasks") ||
-                lists.value.find((l: { displayName: string }) => l.displayName.toLowerCase() === "taken") ||
-                lists.value[0];
-
-            if (defaultList) {
+            const listId = await getMicrosoftListId(task.projectId)
+            if (listId) {
                 await mutateGraph(
-                    `/me/todo/lists/${defaultList.id}/tasks/${task.microsoftId}`,
+                    `/me/todo/lists/${listId}/tasks/${task.microsoftId}`,
                     "DELETE",
                     {}
                 )
             }
         } catch (error) {
             console.error("❌ Microsoft delete sync mislukt:", error)
+        }
+    }
+
+    // Agenda item verwijderen
+    if (task.microsoftCalendarEventId) {
+        try {
+            await mutateGraph(`/me/events/${task.microsoftCalendarEventId}`, "DELETE")
+        } catch (error) {
+            console.error("❌ Outlook delete sync mislukt:", error)
         }
     }
 
@@ -574,9 +617,18 @@ export async function deleteCompletedTasks(filter?: string, projectId?: string) 
         }
     }
 
+    const taskIds = tasksToDelete.map((t: { id: string }) => t.id)
+
+    // Delete related ChecklistItems first to avoid foreign key constraint
+    await prisma.checklistItem.deleteMany({
+        where: {
+            taskId: { in: taskIds }
+        }
+    })
+
     await prisma.task.deleteMany({
         where: {
-            id: { in: tasksToDelete.map((t: { id: string }) => t.id) }
+            id: { in: taskIds }
         }
     })
 
@@ -594,7 +646,8 @@ export async function getCalendarEvents(start: Date, end: Date) {
 
         // 1. Haal Microsoft Calendar events op
         const data = await fetchFromGraph(`/me/calendarview?startDateTime=${startStr}&endDateTime=${endStr}&$top=250`)
-        const msEvents = data.value || []
+        // Filter Prismate-gesynchroniseerde taken om dubbelheden te voorkomen
+        const msEvents = (data.value || []).filter((event: any) => !event.subject?.startsWith("[PRISMATE]"))
 
         // 2. Haal geplande taken op uit Prisma
         const scheduledTasks = await prisma.task.findMany({
@@ -623,3 +676,343 @@ export async function getCalendarEvents(start: Date, end: Date) {
         return { msEvents: [], scheduledTasks: [] }
     }
 }
+
+// --- HELPER FUNCTIONS VOOR MICROSOFT SYNC ---
+
+/**
+ * Haalt de Microsoft List ID op voor een taak.
+ * Prioriteit: 
+ * 1. Het gekoppelde project's microsoftId
+ * 2. De standaardlijst (fallback)
+ */
+async function getMicrosoftListId(projectId: string | null) {
+    if (projectId) {
+        const project = await prisma.project.findUnique({
+            where: { id: projectId },
+            select: { microsoftId: true }
+        })
+        if (project?.microsoftId) return project.microsoftId
+    }
+
+    const listsData = await fetchFromGraph("/me/todo/lists")
+    const lists = listsData.value as { wellKnownListName: string; id: string; displayName: string }[]
+    const targetList =
+        lists.find(l => l.wellKnownListName === "defaultList") ||
+        lists.find(l => l.displayName.toLowerCase() === "tasks") ||
+        lists.find(l => l.displayName.toLowerCase() === "taken") ||
+        lists[0];
+
+    return targetList?.id
+}
+
+/**
+ * Synchroniseert een taak naar de Outlook agenda.
+ * Maakt een event aan, werkt het bij of verwijdert het.
+ */
+async function syncTaskToCalendar(taskId: string) {
+    const task = await prisma.task.findUnique({
+        where: { id: taskId },
+        include: { project: true }
+    })
+
+    if (!task) return
+
+    // Als de taak niet (meer) gepland is of voltooid is, verwijder het agenda item
+    if (!task.startDateTime || !task.dueDateTime || task.status === "completed") {
+        if (task.microsoftCalendarEventId) {
+            try {
+                await mutateGraph(`/me/events/${task.microsoftCalendarEventId}`, "DELETE")
+                await prisma.task.update({
+                    where: { id: taskId },
+                    data: { microsoftCalendarEventId: null }
+                })
+            } catch (error) {
+                console.error("❌ Outlook sync delete mislukt:", error)
+            }
+        }
+        return
+    }
+
+    // Voorbereiden van de event data
+    const eventData = {
+        subject: `[PRISMATE] ${task.title}`,
+        body: {
+            contentType: "HTML",
+            content: `Taak uit Prismate${task.project ? `<br>Project: ${task.project.displayName}` : ''}${task.body ? `<br><br>${task.body}` : ''}`
+        },
+        start: {
+            dateTime: task.startDateTime.toISOString(),
+            timeZone: "UTC"
+        },
+        end: {
+            dateTime: task.dueDateTime.toISOString(),
+            timeZone: "UTC"
+        },
+        // Voeg een categorie toe om het makkelijk te herkennen
+        categories: ["Prismate"]
+    }
+
+    try {
+        if (task.microsoftCalendarEventId) {
+            // Update bestaand event
+            await mutateGraph(`/me/events/${task.microsoftCalendarEventId}`, "PATCH", eventData)
+        } else {
+            // Maak nieuw event
+            const newEvent = await mutateGraph("/me/events", "POST", eventData)
+            await prisma.task.update({
+                where: { id: taskId },
+                data: { microsoftCalendarEventId: newEvent.id }
+            })
+        }
+    } catch (error) {
+        console.error("❌ Outlook sync update/create mislukt:", error)
+    }
+}
+
+export async function getContactsAction() {
+    const { userId } = await auth()
+    if (!userId) return []
+
+    const count = await prisma.contact.count({ where: { clerkUserId: userId } })
+    if (count === 0) {
+        await syncContactsAction()
+    }
+
+    return await prisma.contact.findMany({
+        where: { clerkUserId: userId },
+        select: {
+            id: true,
+            displayName: true,
+            email: true
+        }
+    })
+}
+
+export async function syncContactsAction() {
+    const { userId } = await auth()
+    if (!userId) return
+
+    try {
+        const data = await fetchFromGraph("/me/contacts?\=100")
+        const contacts = (data.value || []) as any[]
+
+        for (const contact of contacts) {
+            const email = contact.emailAddresses?.[0]?.address
+            if (!email) continue
+
+            await prisma.contact.upsert({
+                where: { microsoftId: contact.id },
+                update: {
+                    displayName: contact.displayName || '',
+                    givenName: contact.givenName,
+                    surname: contact.surname,
+                    jobTitle: contact.jobTitle,
+                    companyName: contact.companyName,
+                    email: email,
+                    mobilePhone: contact.mobilePhone,
+                    businessPhone: contact.businessPhones?.[0],
+                },
+                create: {
+                    microsoftId: contact.id,
+                    displayName: contact.displayName || '',
+                    givenName: contact.givenName,
+                    surname: contact.surname,
+                    jobTitle: contact.jobTitle,
+                    companyName: contact.companyName,
+                    email: email,
+                    mobilePhone: contact.mobilePhone,
+                    businessPhone: contact.businessPhones?.[0],
+                    clerkUserId: userId
+                }
+            })
+        }
+    } catch (error) {
+        console.error("❌ Fout bij synchroniseren contacten:", error)
+    }
+}
+
+export async function getEventMasterAction(masterId: string) {
+    const { userId } = await auth()
+    if (!userId) return null
+
+    try {
+        return await fetchFromGraph(`/me/events/${masterId}`)
+    } catch (error) {
+        console.error("❌ Fout bij ophalen master event:", error)
+        return null
+    }
+}
+
+export async function updateCalendarEventAction(eventId: string, data: any) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    try {
+        const graphUpdate: any = {
+            subject: data.title,
+            body: { content: data.body, contentType: "html" },
+            start: { dateTime: data.startDateTime.toISOString(), timeZone: "UTC" },
+            end: { dateTime: data.dueDateTime.toISOString(), timeZone: "UTC" },
+            location: { displayName: data.location || "" },
+            isOnlineMeeting: data.isTeamsMeeting,
+            attendees: (data.attendees || []).map((email: string) => ({
+                emailAddress: { address: email },
+                type: "required"
+            })),
+            recurrence: data.recurrence
+        }
+
+        await mutateGraph(`/me/events/${eventId}`, "PATCH", graphUpdate)
+        revalidatePath("/agenda")
+    } catch (error) {
+        console.error("❌ Fout bij updaten agenda item:", error)
+        throw error
+    }
+}
+
+async function syncNoteToFile(noteId: string) {
+    const note = await prisma.note.findUnique({
+        where: { id: noteId },
+        include: { user: true, project: true }
+    });
+    if (!note) return;
+
+    // We type cast any dynamic values because the schema types may not reflect notesDirectoryPath yet
+    const user = note.user as any;
+    
+    await saveMarkdownNote(user.notesDirectoryPath, {
+        id: note.id,
+        title: note.title,
+        projectId: note.projectId,
+        tags: note.tags,
+        isPinned: note.isPinned,
+        createdAt: note.createdAt.toISOString(),
+        updatedAt: note.updatedAt.toISOString(),
+    }, note.content || "", note.project?.displayName);
+}
+
+export async function updateNoteContent(noteId: string, content: string) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    if (!note || note.clerkUserId !== userId) throw new Error("Unauthorized")
+
+    await prisma.note.update({
+        where: { id: noteId },
+        data: { content }
+    })
+    
+    await syncNoteToFile(noteId);
+    revalidatePath("/notes")
+}
+
+export async function createNote() {
+    const { userId } = await auth()
+    if (!userId) throw new Error("Unauthorized")
+
+    const note = await prisma.note.create({
+        data: {
+            title: "Nieuwe notitie",
+            content: "[]",
+            clerkUserId: userId
+        }
+    })
+
+    await syncNoteToFile(note.id);
+    revalidatePath("/notes")
+    return note.id
+}
+
+export async function importMarkdownNote(filename: string, fileContent: string) {
+    const { userId } = await auth();
+    if (!userId) return;
+
+    try {
+        const { data, content } = matter(fileContent);
+        
+        const title = data.title || filename.replace('.md', '');
+        
+        const note = await prisma.note.create({
+            data: {
+                title,
+                content: content || "",
+                tags: Array.isArray(data.tags) ? data.tags : [],
+                isPinned: data.isPinned || false,
+                clerkUserId: userId
+            }
+        });
+
+        await syncNoteToFile(note.id);
+        revalidatePath("/notes");
+        return note.id;
+    } catch (e) {
+        console.error("Error importing note:", e);
+        throw e;
+    }
+}
+
+export async function updateNoteTags(noteId: string, tags: string[]) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    if (!note || note.clerkUserId !== userId) throw new Error("Unauthorized")
+
+    await prisma.note.update({
+        where: { id: noteId },
+        data: { tags }
+    })
+    
+    await syncNoteToFile(noteId);
+    revalidatePath("/notes")
+}
+
+export async function updateNoteProject(noteId: string, projectId: string | null) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    if (!note || note.clerkUserId !== userId) throw new Error("Unauthorized")
+
+    await prisma.note.update({
+        where: { id: noteId },
+        data: { projectId }
+    })
+    
+    await syncNoteToFile(noteId);
+    revalidatePath("/notes")
+}
+
+export async function updateNoteTitle(noteId: string, title: string) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    if (!note || note.clerkUserId !== userId) throw new Error("Unauthorized")
+
+    await prisma.note.update({
+        where: { id: noteId },
+        data: { title }
+    })
+    
+    await syncNoteToFile(noteId);
+    revalidatePath("/notes")
+}
+
+export async function toggleNoteFavorite(noteId: string, isPinned: boolean) {
+    const { userId } = await auth()
+    if (!userId) return
+
+    const note = await prisma.note.findUnique({ where: { id: noteId } })
+    if (!note || note.clerkUserId !== userId) throw new Error("Unauthorized")
+
+    await prisma.note.update({
+        where: { id: noteId },
+        data: { isPinned }
+    })
+    
+    await syncNoteToFile(noteId);
+    revalidatePath("/notes")
+}
+

@@ -1,6 +1,6 @@
+import { IconSun, IconMoon } from "@tabler/icons-react";
 import * as React from 'react';
 import { useMantineColorScheme, Switch, Tooltip } from '@mantine/core';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 export function ThemeToggle() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -13,15 +13,7 @@ export function ThemeToggle() {
   const dark = colorScheme === 'dark';
 
   if (!mounted) {
-    return (
-      <Switch
-        size="md"
-        styles={{ 
-          track: { backgroundColor: 'var(--mantine-color-indigo-5)', border: 'none' },
-          thumb: { display: 'flex', alignItems: 'center', justifyContent: 'center' } 
-        }}
-      />
-    );
+    return <Switch size="md" color="blue" />;
   }
 
   return (
@@ -30,26 +22,14 @@ export function ThemeToggle() {
         checked={dark}
         onChange={() => toggleColorScheme()}
         size="md"
+        color="blue"
         thumbIcon={
           dark ? (
-            <MoonIcon className="size-[12px] text-indigo-700" strokeWidth={1.2} />
+            <IconMoon size={12} stroke={1.2} color="var(--mantine-color-blue-7)" />
           ) : (
-            <SunIcon className="size-[12px] text-indigo-700" strokeWidth={1.2} />
+            <IconSun size={12} stroke={1.2} color="var(--mantine-color-blue-7)" />
           )
         }
-        styles={{
-          track: {
-            cursor: 'pointer',
-            backgroundColor: dark ? 'var(--mantine-color-indigo-3)' : 'var(--mantine-color-indigo-5)',
-            border: 'none',
-          },
-          thumb: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'var(--mantine-color-white)',
-          }
-        }}
       />
     </Tooltip>
   );

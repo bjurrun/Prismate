@@ -2,17 +2,17 @@ import { SignUp } from "@clerk/nextjs";
 
 export default function SignUpPage() {
     return (
-        <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-6 md:p-10">
+        <div className="flex min-h-screen w-full items-center justify-center bg-(--mantine-color-gray-0) p-6 md:p-10">
             <div className="w-full max-w-sm">
                 <SignUp
                     appearance={{
                         variables: {
-                            colorPrimary: "#09090b",
-                            borderRadius: "0.5rem",
+                            colorPrimary: "#228be6",
+                            borderRadius: "var(--mantine-radius-md)",
                         },
                         elements: {
-                            card: "shadow-xl border border-border bg-card",
-                            formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90",
+                            card: "shadow-xl border border-(--mantine-color-default-border) bg-(--mantine-color-body)",
+                            formButtonPrimary: "bg-(--mantine-color-blue-filled) text-white hover:bg-(--mantine-color-blue-filled-hover)",
                         },
                     }}
                 />

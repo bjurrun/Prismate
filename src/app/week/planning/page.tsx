@@ -1,15 +1,18 @@
+import { Stack, Title, Text, Paper, Center } from "@mantine/core"
+
 export default function WeekPlanningPage() {
     return (
-        <div className="space-y-6 sm:space-y-8">
-            <header className="flex flex-col gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Week Planning</h1>
-                    <p className="text-gray-500 text-sm sm:text-base">Plan je week vooruit.</p>
-                </div>
-            </header>
-            <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed rounded-xl border-gray-200">
-                <p className="text-gray-500">Hier komt de week planning.</p>
-            </div>
-        </div>
+        <Stack gap="xl">
+            <Stack gap="xs">
+                <Title order={1}>Week Planning</Title>
+                <Text c="dimmed">Plan je week vooruit.</Text>
+            </Stack>
+
+            <Paper withBorder radius="md" p="xl" className="min-h-[400px]">
+                <Center h="100%">
+                    <Text c="dimmed">Hier komt de week planning.</Text>
+                </Center>
+            </Paper>
+        </Stack>
     )
 }

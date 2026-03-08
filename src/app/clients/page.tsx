@@ -1,15 +1,17 @@
+import { Title, Text, Container, Paper } from "@mantine/core"
+
 export default function ClientsPage() {
     return (
-        <div className="space-y-6 sm:space-y-8">
-            <header className="flex flex-col gap-4">
+        <Container fluid p="xl">
+            <header className="flex flex-col gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Klanten</h1>
-                    <p className="text-muted-foreground text-sm sm:text-base">Houd je klantrelaties bij.</p>
+                    <Title order={1} size="h2">Klanten</Title>
+                    <Text size="sm" c="dimmed">Houd je klantrelaties bij.</Text>
                 </div>
             </header>
-            <div className="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed rounded-xl border-muted-foreground/20">
-                <p className="text-muted-foreground">Hier komt het klantenoverzicht.</p>
-            </div>
-        </div>
+            <Paper withBorder p="xl" radius="md" bg="var(--mantine-color-gray-0)" className="min-h-[400px] flex items-center justify-center border-dashed">
+                <Text c="dimmed">Hier komt het klantenoverzicht.</Text>
+            </Paper>
+        </Container>
     )
 }

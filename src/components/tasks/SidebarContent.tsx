@@ -1,20 +1,8 @@
 'use client'
+import { IconSun, IconStar, IconCalendar, IconCheck, IconInbox, IconSearch, IconHash, IconX, IconRefresh, IconBookmark } from "@tabler/icons-react";
 
 import * as React from "react"
-import {
-    Sun,
-    Star,
-    Calendar,
-    CheckCircle2,
-    Inbox,
-    Search,
-    Hash,
-    X,
-    RefreshCcw,
-    Loader2
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { TextInput, Button, ActionIcon, ScrollArea, Drawer } from "@mantine/core"
+import { TextInput, Button, ActionIcon, ScrollArea, Drawer, Text, Stack, Box, NavLink, Divider } from "@mantine/core"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { syncTasksAction } from "@/app/actions"
@@ -57,108 +45,121 @@ export function SidebarContent({ projects, open, onOpenChange, isCollapsed }: Si
     }
 
     const sidebarItems = (
-        <div className="flex flex-col h-full bg-background md:bg-muted/10">
-            <div className="p-4 pt-12 md:pt-4">
-                <div className="relative">
-                    <TextInput
-                        placeholder="Zoeken"
-                        leftSection={<Search className="h-4 w-4 text-muted-foreground" />}
-                        className="w-full"
-                    />
-                </div>
-            </div>
+        <Stack h="100%" gap={0} bg="var(--mantine-color-body)">
+            <Box p="md" pt={{ base: 48, md: 'md' }}>
+                <TextInput
+                    placeholder="Zoeken"
+                    leftSection={<IconSearch size={16} stroke={1.2} />}
+                    w="100%"
+                />
+            </Box>
 
-            <ScrollArea className="flex-1 px-2">
-                <nav className="space-y-1 pb-4">
-                    <SmartNavItem
+            <ScrollArea flex={1} px="xs">
+                <Stack gap={4} pb="md" component="nav">
+                    <NavLink
+                        component={Link}
                         href="/tasks?filter=myday"
-                        icon={<Sun className="h-4 w-4" />}
                         label="Mijn dag"
                         active={currentFilter === 'myday' || (!currentFilter && !currentProjectId)}
                         onClick={closeSheet}
+                        leftSection={<IconSun size={16} stroke={1.2} color="var(--mantine-color-yellow-5)" />}
                     />
-                    <SmartNavItem
+                    <NavLink
+                        component={Link}
                         href="/tasks?filter=important"
-                        icon={<Star className="h-4 w-4" />}
                         label="Belangrijk"
                         active={currentFilter === 'important'}
                         onClick={closeSheet}
+                        leftSection={<IconStar size={16} stroke={1.2} color="var(--mantine-color-red-5)" />}
                     />
-                    <SmartNavItem
+                    <NavLink
+                        component={Link}
                         href="/tasks?filter=planned"
-                        icon={<Calendar className="h-4 w-4" />}
                         label="Gepland"
                         active={currentFilter === 'planned'}
                         onClick={closeSheet}
+                        leftSection={<IconCalendar size={16} stroke={1.2} color="var(--mantine-color-green-5)" />}
                     />
-                    <SmartNavItem
+                    <NavLink
+                        component={Link}
+                        href="/tasks?filter=someday"
+                        label="Ooit"
+                        active={currentFilter === 'someday'}
+                        onClick={closeSheet}
+                        leftSection={<IconBookmark size={16} stroke={1.2} color="var(--mantine-color-blue-5)" />}
+                    />
+                    <NavLink
+                        component={Link}
                         href="/tasks?filter=completed"
-                        icon={<CheckCircle2 className="h-4 w-4" />}
                         label="Voltooid"
                         active={currentFilter === 'completed'}
                         onClick={closeSheet}
+                        leftSection={<IconCheck size={16} stroke={1.2} color="var(--mantine-color-green-6)" />}
                     />
-                    <SmartNavItem
+                    <NavLink
+                        component={Link}
                         href="/tasks"
-                        icon={<Inbox className="h-4 w-4" />}
                         label="Taken"
                         active={!currentFilter && !currentProjectId}
                         onClick={closeSheet}
+                        leftSection={<IconInbox size={16} stroke={1.2} color="var(--mantine-color-blue-5)" />}
                     />
-                </nav>
+                </Stack>
 
-                <div className="mt-4 px-3 mb-2">
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Projecten</h3>
-                </div>
+                <Text size="xs" fw={600} c="dimmed" tt="uppercase" px="xs" style={{ letterSpacing: '0.05em' }}>Projecten</Text>
 
-                <nav className="px-1 space-y-1">
+                <Stack px={4} gap={4} component="nav">
                     {projects.map((project) => (
-                        <SmartNavItem
+                        <NavLink
                             key={project.id}
+                            component={Link}
                             href={`/tasks?projectId=${project.id}`}
-                            icon={<Hash className="h-4 w-4" />}
                             label={project.displayName}
                             active={currentProjectId === project.id}
                             onClick={closeSheet}
+                            leftSection={<IconHash size={16} stroke={1.2} />}
                         />
                     ))}
-                </nav>
+                </Stack>
             </ScrollArea>
 
-            <footer className="p-4 border-t flex flex-col gap-4">
+            <Divider />
+            <Stack p="md" gap="md" component="footer">
                 <Button
-                    variant="outline"
-                    color="gray"
-                    size="sm"
-                    className="w-full justify-start gap-3 h-10 border-muted-foreground/20 hover:border-muted-foreground/40 bg-background/50 backdrop-blur-sm"
+                    variant="default"
+                    fullWidth
                     onClick={handleSync}
                     disabled={isSyncing}
+                    loading={isSyncing}
+                    leftSection={!isSyncing ? <IconRefresh size={16} stroke={1.2} /> : undefined}
                 >
-                    {isSyncing ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    ) : (
-                        <RefreshCcw className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span className="text-sm font-medium">{isSyncing ? "Synchroniseren..." : "Nu vernieuwen"}</span>
+                    {isSyncing ? "Synchroniseren..." : "Nu vernieuwen"}
                 </Button>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest text-center md:hidden">
+                <Text size="xs" c="dimmed" tt="uppercase" ta="center" hiddenFrom="md" style={{ letterSpacing: '0.1em' }}>
                     Prismate © 2026
-                </p>
-            </footer>
-        </div>
+                </Text>
+            </Stack>
+        </Stack>
     )
 
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className={cn(
-                "hidden md:flex border-r flex-col shrink-0 transition-all duration-300 overflow-hidden",
-                isCollapsed ? "w-0 border-r-0" : "w-64"
-            )}>
-                <div className="w-64 h-full">
+            <Box
+                component="aside"
+                visibleFrom="md"
+                style={{
+                    flexShrink: 0,
+                    transition: 'width 300ms, border-width 300ms',
+                    overflow: 'hidden',
+                    borderRight: isCollapsed ? 'none' : '1px solid var(--mantine-color-default-border)',
+                    width: isCollapsed ? 0 : 256,
+                }}
+            >
+                <Box w={256} h="100%">
                     {sidebarItems}
-                </div>
-            </aside>
+                </Box>
+            </Box>
 
             {/* Mobile Sheet */}
             <Drawer
@@ -166,48 +167,24 @@ export function SidebarContent({ projects, open, onOpenChange, isCollapsed }: Si
                 onClose={closeSheet}
                 position="left"
                 size="100%"
-                title={<span className="sr-only">Navigatiemenu</span>}
                 padding={0}
                 withCloseButton={false}
             >
-                <div className="absolute right-4 top-4 z-10">
-                    <ActionIcon variant="subtle" color="gray" size="lg" onClick={closeSheet}>
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Sluiten</span>
-                    </ActionIcon>
-                </div>
+                <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="lg"
+                    pos="absolute"
+                    top={16}
+                    right={16}
+                    style={{ zIndex: 10 }}
+                    onClick={closeSheet}
+                    aria-label="Sluiten"
+                >
+                    <IconX size={20} stroke={1.2} />
+                </ActionIcon>
                 {sidebarItems}
             </Drawer>
         </>
-    )
-}
-
-function SmartNavItem({
-    href,
-    icon,
-    label,
-    active = false,
-    onClick
-}: {
-    href: string,
-    icon: React.ReactNode,
-    label: string,
-    active?: boolean,
-    onClick?: () => void
-}) {
-    return (
-        <Link
-            href={href}
-            onClick={onClick}
-            className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                active
-                    ? "bg-secondary text-secondary-foreground"
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
-            )}
-        >
-            <span className={active ? "text-primary" : "text-muted-foreground"}>{icon}</span>
-            <span className="flex-1 text-left truncate">{label}</span>
-        </Link>
     )
 }

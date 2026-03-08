@@ -76,7 +76,7 @@ export function useCalendarEvents() {
         fetchEvents()
     }, [fetchEvents])
 
-    const handleEventDrop = async ({ event, start, end }: any) => {
+    const handleEventDrop = useCallback(async ({ event, start, end }: any) => {
         const typedEvent = event as BigCalendarEvent
         const updatedEvent = { ...typedEvent, start: start as Date, end: end as Date }
         setEvents(prev => prev.map(e => e.id === typedEvent.id ? updatedEvent : e))
@@ -99,9 +99,9 @@ export function useCalendarEvents() {
         } catch (e) {
             console.error(e)
         }
-    }
+    }, [])
 
-    const handleEventResize = async ({ event, start, end }: any) => {
+    const handleEventResize = useCallback(async ({ event, start, end }: any) => {
         const typedEvent = event as BigCalendarEvent
         const updatedEvent = { ...typedEvent, start: start as Date, end: end as Date }
         setEvents(prev => prev.map(e => e.id === typedEvent.id ? updatedEvent : e))
@@ -124,9 +124,9 @@ export function useCalendarEvents() {
         } catch (e) {
             console.error(e)
         }
-    }
+    }, [])
 
-    const handleDropFromOutside = async ({ start, draggedTask }: any) => {
+    const handleDropFromOutside = useCallback(async ({ start, draggedTask }: any) => {
         if (!draggedTask) return
         const taskId = draggedTask.id
         const taskTitle = draggedTask.title
@@ -143,7 +143,7 @@ export function useCalendarEvents() {
         } catch (e) {
             console.error(e)
         }
-    }
+    }, [])
 
     return {
         events,

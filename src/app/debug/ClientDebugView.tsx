@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { IconAlertCircle } from "@tabler/icons-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Table, Card, Badge, Alert, Title, Text, Stack, Group, Code } from "@mantine/core";
-import { AlertCircle } from "lucide-react";
+;
 
 export function ClientDebugView({
     user,
@@ -24,7 +25,7 @@ export function ClientDebugView({
             </Stack>
 
             {(fetchErrors.length > 0 || listErrors.length > 0) && (
-                <Alert icon={<AlertCircle size={16} />} title="Sommige data kon niet worden opgehaald (Throttling?)" color="red">
+                <Alert icon={<IconAlertCircle className="size-4" />} title="Sommige data kon niet worden opgehaald (Throttling?)" color="red">
                     <ul className="list-disc list-inside">
                         {[...fetchErrors, ...listErrors].map((err: string, i: number) => (
                             <li key={i}>{err}</li>
@@ -37,7 +38,7 @@ export function ClientDebugView({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* User Info */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Title order={3} size="h4">User Info (Clerk)</Title>
                     </div>
                     <div className="px-4 py-4">
@@ -49,7 +50,7 @@ export function ClientDebugView({
 
                 {/* Microsoft Token */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Title order={3} size="h4">Microsoft Access Token</Title>
                     </div>
                     <div className="px-4 py-4">
@@ -70,7 +71,7 @@ export function ClientDebugView({
             <div className="grid gap-8">
                 {/* TABEL 1: Microsoft Taken */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Group justify="space-between">
                             <Title order={3} size="h4">Microsoft Taken (Live)</Title>
                             <Badge variant="outline">{allTasks.length} taken gevonden</Badge>
@@ -120,7 +121,7 @@ export function ClientDebugView({
 
                 {/* TABEL 2: To Do Lijsten */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Title order={3} size="h4" c="dimmed">Microsoft To Do Lijsten</Title>
                     </div>
                     <div className="overflow-x-auto mt-4">
@@ -155,7 +156,7 @@ export function ClientDebugView({
 
                 {/* TABEL 3: Contacten */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Title order={3} size="h4" c="dimmed">Outlook Contacten</Title>
                     </div>
                     <div className="overflow-x-auto mt-4">
@@ -192,7 +193,7 @@ export function ClientDebugView({
 
                 {/* TABEL 4: Kalender Events */}
                 <Card withBorder shadow="sm" radius="md">
-                    <div className="border-b border-gray-200 dark:border-gray-800 px-4 py-2">
+                    <div className="border-b border-(--mantine-color-default-border) px-4 py-2">
                         <Title order={3} size="h4" c="dimmed">Microsoft Agenda</Title>
                     </div>
                     <div className="overflow-x-auto mt-4">

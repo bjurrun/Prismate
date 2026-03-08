@@ -1,75 +1,76 @@
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// 1. Gebruikers (Gekoppeld aan Clerk & Microsoft)
-model User {
-  id               String    @id // Clerk User ID
-  email            String    @unique
-  microsoftId      String?   @unique // Microsoft Graph User ID
-  createdAt        DateTime  @default(now())
-  tasks            Task[]
-  projects         Project[]
-  contacts         Contact[]
+datasource db {
+  provider = "postgresql"
 }
 
-// 2. Projecten (Gekoppeld aan Microsoft To Do Lists)
+model User {
+  id                 String      @id
+  email              String      @unique
+  microsoftId        String?     @unique
+  notesDirectoryPath String?
+  createdAt          DateTime    @default(now())
+  contacts           Contact[]
+  projects           Project[]
+  tasks              Task[]
+  notes              Note[]
+  files              File[]
+  inboxItems         InboxItem[]
+}
+
 model Project {
-  id              String   @id @default(cuid())
-  microsoftId     String?  @unique // De ID van de Microsoft To Do List
-  displayName     String
-  isShared        Boolean  @default(false)
-  clerkUserId     String
-  user            User     @relation(fields: [clerkUserId], references: [id])
-  tasks           Task[]
-  createdAt       DateTime @default(now())
+  id          String   @id @default(cuid())
+  microsoftId String?  @unique
+  displayName String
+  isShared    Boolean  @default(false)
+  clerkUserId String
+  createdAt   DateTime @default(now())
+  deletedAt   DateTime?
+  user        User     @relation(fields: [clerkUserId], references: [id])
+  tasks       Task[]
+  notes       Note[]
+  files       File[]
 
   @@unique([clerkUserId, microsoftId], name: "clerkUserId_microsoftId")
 }
 
-// 3. Taken (Gekoppeld aan Microsoft TodoTask & Gevlagde E-mails)
 model Task {
-  id                   String   @id @default(cuid())
-  microsoftId          String?  @unique // De ID van de TodoTask of Message
-  title                String
-  body                 String?  @db.Text
-  status               String   @default("notStarted") // notStarted, inProgress, completed, etc.
-  importance           String   @default("normal") // low, normal, high
-  isImportant          Boolean  @default(false)
-  
-  // Datums (Microsoft Spiegeling)
-  isReminderOn         Boolean  @default(false)
-  createdDateTime      DateTime @default(now())
-  lastModifiedDateTime DateTime @updatedAt
-  startDateTime        DateTime?
-  dueDateTime          DateTime?
-  completedDateTime    DateTime?
-  reminderDateTime     DateTime?
-  
-  // Microsoft Graph Sync & GRIP logic
-  recurrence           Json?     // patternedRecurrence (pattern + range)
-  categories           String[]  @default([])
-  isMyDay              Boolean   @default(false)
-  myDayDate            DateTime?
+  id                       String          @id @default(cuid())
+  microsoftId              String?         @unique
+  title                    String
+  body                     String?
+  status                   String          @default("notStarted")
+  importance               String          @default("normal")
+  isImportant              Boolean         @default(false)
+  isReminderOn             Boolean         @default(false)
+  createdDateTime          DateTime        @default(now())
+  lastModifiedDateTime     DateTime        @updatedAt
+  startDateTime            DateTime?
+  dueDateTime              DateTime?
+  completedDateTime        DateTime?
+  reminderDateTime         DateTime?
+  recurrence               Json?
+  categories               String[]        @default([])
+  isMyDay                  Boolean         @default(false)
+  isSomeday                Boolean         @default(false)
+  myDayDate                DateTime?
   bodyLastModifiedDateTime DateTime?
-  
-  // Inbox Context (Voor gevlagde mails)
-  isFromEmail          Boolean  @default(false)
-  webLink              String?  // Link naar originele e-mail
-  fromEmail            String?  // Afzender van de gevlagde mail
-  
-  // Relaties
-  clerkUserId          String
-  user                 User     @relation(fields: [clerkUserId], references: [id])
-  projectId            String?
-  project              Project? @relation(fields: [projectId], references: [id])
-  
-  // Sub-taken (Microsoft ChecklistItems)
-  checklists           ChecklistItem[]
+  isFromEmail              Boolean         @default(false)
+  webLink                  String?
+  fromEmail                String?
+  clerkUserId              String
+  projectId                String?
+  microsoftCalendarEventId String?         @unique
+  attendees                Json?
+  isTeamsMeeting           Boolean         @default(false)
+  location                 String?
+  deletedAt                DateTime?
+  checklists               ChecklistItem[]
+  user                     User            @relation(fields: [clerkUserId], references: [id])
+  project                  Project?        @relation(fields: [projectId], references: [id])
+  files                    File[]
 
   @@index([clerkUserId, isImportant, isMyDay])
 }
@@ -82,7 +83,6 @@ model ChecklistItem {
   task        Task    @relation(fields: [taskId], references: [id])
 }
 
-// 4. Klanten (Gekoppeld aan Microsoft Contacts)
 model Contact {
   id            String   @id @default(cuid())
   microsoftId   String?  @unique
@@ -94,8 +94,60 @@ model Contact {
   email         String?
   mobilePhone   String?
   businessPhone String?
-  notes         String?  @db.Text
+  notes         String?
   clerkUserId   String
-  user          User     @relation(fields: [clerkUserId], references: [id])
   createdAt     DateTime @default(now())
+  user          User     @relation(fields: [clerkUserId], references: [id])
+}
+
+enum InboxItemType {
+  EMAIL
+  NOTE
+  FILE
+  OTHER
+}
+
+model InboxItem {
+  id          String        @id @default(cuid())
+  title       String
+  type        InboxItemType @default(OTHER)
+  content     String?
+  sourceId    String?
+  clerkUserId String
+  createdAt   DateTime      @default(now())
+  deletedAt   DateTime?
+  user        User          @relation(fields: [clerkUserId], references: [id])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  title       String
+  content     String?
+  projectId   String?
+  clerkUserId String
+  isPinned    Boolean   @default(false)
+  tags        String[]  @default([])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  user        User      @relation(fields: [clerkUserId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
+  files       File[]
+}
+
+model File {
+  id          String    @id @default(cuid())
+  title       String
+  url         String
+  type        String
+  projectId   String?
+  taskId      String?
+  noteId      String?
+  clerkUserId String
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  user        User      @relation(fields: [clerkUserId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
+  task        Task?     @relation(fields: [taskId], references: [id])
+  note        Note?     @relation(fields: [noteId], references: [id])
 }

@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AppShell } from "@/components/app-shell";
-import { MantineProvider, createTheme, ColorSchemeScript, MantineColorsTuple } from "@mantine/core";
+import { ColorSchemeScript } from "@mantine/core";
+import { MantineThemeProvider } from "@/components/theme-provider";
+import { PrismateSpotlight } from "@/components/providers/PrismateSpotlight";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import "@mantine/spotlight/styles.css";
+import "@/theme/style.css";
 import "dayjs/locale/nl";
 import "./globals.css";
 
@@ -23,27 +27,6 @@ export const metadata: Metadata = {
   description: "Vang je taken en krijg grip op je dag.",
 };
 
-const myColor: MantineColorsTuple = [
-  '#ecefff',
-  '#d5dafb',
-  '#a9b1f1',
-  '#7a87e9',
-  '#5362e1',
-  '#3a4bdd',
-  '#2c40dc',
-  '#1f32c4',
-  '#182cb0',
-  '#0a259c'
-];
-
-const theme = createTheme({
-  primaryColor: 'myColor',
-  colors: {
-    myColor,
-  },
-  fontFamily: 'var(--font-geist-sans), sans-serif',
-});
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -51,18 +34,19 @@ export default async function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="nl" className="antialiased" data-mantine-color-scheme="light">
+      <html lang="nl" className="antialiased" suppressHydrationWarning>
         <head>
           <ColorSchemeScript defaultColorScheme="light" />
         </head>
         <body
           className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans`}
         >
-          <MantineProvider theme={theme} defaultColorScheme="light">
+          <MantineThemeProvider>
+            <PrismateSpotlight />
             <AppShell>
               {children}
             </AppShell>
-          </MantineProvider>
+          </MantineThemeProvider>
         </body>
       </html>
     </ClerkProvider>

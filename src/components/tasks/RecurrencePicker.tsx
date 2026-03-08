@@ -1,9 +1,9 @@
 'use client'
+import { IconRefresh } from "@tabler/icons-react";
 
 import * as React from "react"
-import { Repeat } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button, Checkbox, Popover, Select } from "@mantine/core"
+
+import { Button, Checkbox, Popover, Select, Stack, Text, Group, Grid } from "@mantine/core"
 
 interface RecurrencePickerProps {
     value?: {
@@ -59,28 +59,29 @@ export function RecurrencePicker({ value, onChange }: RecurrencePickerProps) {
     }
 
     return (
-        <Popover position="bottom-start" shadow="md" width="target">
+        <Popover position="bottom-end" shadow="md" width={300} transitionProps={{ transition: 'pop-top-left' }}>
             <Popover.Target>
                 <Button
                     variant="subtle"
-                    color="gray"
-                    className={cn(
-                        "w-full justify-start gap-3 h-12 font-normal",
-                        currentType === "none" && "text-muted-foreground"
-                    )}
+                    c="var(--mantine-color-text)"
+                    fw={400}
+                    justify="flex-start"
+                    className="w-full h-14 font-normal rounded-none px-4"
                 >
-                    <Repeat className="h-4 w-4" />
-                    <div className="flex flex-col items-start leading-tight">
-                        <span className="text-sm">{getLabel()}</span>
-                        {currentType === "custom" && value?.pattern?.daysOfWeek && value.pattern.daysOfWeek.length > 0 && (
-                            <span className="text-[10px] text-primary">
-                                {value.pattern.daysOfWeek.map(d => DAYS.find(day => day.value === d)?.label).join(", ")}
-                            </span>
-                        )}
-                    </div>
+                    <Group gap="xl" wrap="nowrap">
+                        <IconRefresh className="h-4 w-4 shrink-0" />
+                        <Stack gap={0} align="flex-start" h="100%" justify="center">
+                            <Text component="span" size="sm">{getLabel()}</Text>
+                            {currentType === "custom" && value?.pattern?.daysOfWeek && value.pattern.daysOfWeek.length > 0 && (
+                                <Text size="10px" c="blue" fw={500}>
+                                    {value.pattern.daysOfWeek.map(d => DAYS.find(day => day.value === d)?.label).join(", ")}
+                                </Text>
+                            )}
+                        </Stack>
+                    </Group>
                 </Button>
             </Popover.Target>
-            <Popover.Dropdown p={0}>
+            <Popover.Dropdown p="md">
                 <RecurrencePickerContent value={value} onChange={onChange} />
             </Popover.Dropdown>
         </Popover>
@@ -155,15 +156,16 @@ export function RecurrencePickerContent({ value, onChange }: RecurrencePickerPro
     }
 
     return (
-        <div className="p-4 flex flex-col gap-4">
-            <div className="space-y-2">
-                <h4 className="text-sm font-medium leading-none">Herhaling</h4>
-                <p className="text-xs text-muted-foreground">Hoe vaak moet deze taak terugkeren?</p>
-            </div>
+        <Stack gap="md">
+            <Stack gap={4}>
+                <Text size="sm" fw={600}>Herhaling</Text>
+                <Text size="xs" c="dimmed">Hoe vaak moet deze taak terugkeren?</Text>
+            </Stack>
 
             <Select
                 value={selectedType}
                 onChange={(val) => handleTypeChange(val || "none")}
+                placeholder="Kies een herhaling"
                 data={[
                     { value: "none", label: "Niet herhalen" },
                     { value: "daily", label: "Dagelijks" },
@@ -175,35 +177,39 @@ export function RecurrencePickerContent({ value, onChange }: RecurrencePickerPro
             />
 
             {selectedType === "custom" && (
-                <div className="space-y-3 pt-2 border-t mt-4">
-                    <span className="text-xs font-semibold">Herhaal op</span>
-                    <div className="grid grid-cols-4 gap-2">
+                <Stack gap="xs" mt="sm">
+                    <Text size="xs" fw={700} tt="uppercase" lts={0.5} c="dimmed">Herhaal op</Text>
+                    <Grid gutter="xs" columns={4}>
                         {DAYS.map((day) => (
-                            <div key={day.value} className="flex items-center space-x-2">
+                            <Grid.Col span={1} key={day.value}>
                                 <Checkbox
                                     id={`day-${day.value}`}
                                     checked={selectedDays.includes(day.value)}
                                     onChange={() => toggleDay(day.value)}
                                     label={day.label}
                                     size="xs"
-                                    styles={{ label: { cursor: 'pointer', fontSize: '10px' } }}
+                                    styles={{
+                                        label: { cursor: 'pointer', fontSize: '11px', paddingLeft: '6px' },
+                                        inner: { cursor: 'pointer' }
+                                    }}
                                 />
-                            </div>
+                            </Grid.Col>
                         ))}
-                    </div>
-                </div>
+                    </Grid>
+                </Stack>
             )}
 
             {currentType !== "none" && (
                 <Button
-                    variant="outline"
-                    color="gray"
-                    className="w-full text-xs h-8 mt-2"
+                    variant="light"
+                    color="red"
+                    size="compact-xs"
+                    className="mt-2"
                     onClick={() => onChange(null)}
                 >
                     Herhaling verwijderen
                 </Button>
             )}
-        </div>
+        </Stack>
     )
 }

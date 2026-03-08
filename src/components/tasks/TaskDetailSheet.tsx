@@ -1,17 +1,11 @@
 'use client'
+import { IconCalendar, IconSun, IconPlus, IconTrash, IconStar, IconBookmark, IconStarFilled } from "@tabler/icons-react";
 
 import * as React from "react"
 
-import { Button, TextInput, Textarea, Checkbox, ActionIcon, Popover } from "@mantine/core"
+import { Button, TextInput, Textarea, Checkbox, ActionIcon, Popover, useMantineColorScheme, Stack, Group, Box, Text } from "@mantine/core"
 import { DatePicker } from "@mantine/dates"
-import {
-    Calendar as CalendarIcon,
-    Sun,
-    Plus,
-    Trash2,
-    ChevronRight,
-    Star
-} from "lucide-react"
+
 import {
     addChecklistItem,
     toggleChecklistItem,
@@ -19,7 +13,7 @@ import {
     updateTask,
     toggleTaskStatus
 } from "@/app/actions"
-import { cn } from "@/lib/utils"
+
 import { format } from "date-fns"
 import { ProjectSelector } from "../projects/ProjectSelector"
 import { ReminderPicker } from "./ReminderPicker"
@@ -29,6 +23,11 @@ interface ChecklistItem {
     id: string
     title: string
     isCompleted: boolean
+}
+
+interface Project {
+    id: string
+    displayName: string
 }
 
 interface Task {
@@ -52,12 +51,24 @@ interface Task {
         }
     } | null
     isMyDay?: boolean
+    isSomeday?: boolean
     projectId: string | null
     checklists: ChecklistItem[]
 }
 
-export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | null, onClose: () => void }) {
-    const [isPending, startTransition] = React.useTransition()
+export function TaskDetailSheet({ 
+    task: initialTask, 
+    projects,
+    onStatusChange 
+}: { 
+    task: Task | null, 
+    projects?: Project[],
+    onStatusChange?: (taskId: string, status: string) => void 
+}) {
+    const { colorScheme } = useMantineColorScheme()
+    const isDark = colorScheme === 'dark'
+    
+    const [, startTransition] = React.useTransition()
     const [optimisticTask, setOptimisticTask] = React.useOptimistic(
         initialTask,
         (state, update: Partial<Task>) => {
@@ -138,6 +149,7 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
     const handleToggleStatus = (checked: boolean) => {
         if (!optimisticTask) return
         const newStatus = checked ? "completed" : "notStarted"
+        onStatusChange?.(optimisticTask.id, newStatus)
         startTransition(() => {
             setOptimisticTask({ status: newStatus })
             toggleTaskStatus(optimisticTask.id, checked)
@@ -145,23 +157,37 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
     }
 
     return (
-        <div className="flex flex-col h-[100dvh]">
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
+        <Stack h="100%" gap={0} style={{ minWidth: 0 }}>
+            <Box flex={1} pb="md" style={{ overflowY: 'auto' }} className="scrollbar-thin">
+                {/* Section 1: Status, Title, Star, Steps */}
+                <Stack pl="md" py="md" pr={0} gap="md">
+                    <Group align="flex-start" gap="md" wrap="nowrap">
                         <Checkbox
+                            className="mt-1"
                             checked={optimisticTask!.status === "completed"}
                             onChange={(e) => handleToggleStatus(e.currentTarget.checked)}
                             radius="xl"
-                            size="md"
+                            size="sm"
+                            styles={{
+                                input: {
+                                    borderColor: optimisticTask!.status === "completed" ? 'transparent' : (isDark ? 'white' : 'var(--mantine-color-dimmed)'),
+                                    borderWidth: '1.5px',
+                                },
+                                icon: {
+                                    color: isDark ? 'var(--mantine-color-body)' : 'white'
+                                }
+                            }}
                         />
-                        <TextInput
+                        <Textarea
                             value={title}
                             onChange={(e) => setTitle(e.currentTarget.value)}
                             onBlur={handleTitleBlur}
                             variant="unstyled"
+                            autosize
+                            minRows={1}
+                            maxRows={5}
                             className="flex-1"
-                            styles={{ input: { fontSize: '20px', fontWeight: 700 } }}
+                            styles={{ input: { fontSize: '18px', fontWeight: 600, padding: 0, lineHeight: 1.3 } }}
                         />
                         <ActionIcon
                             variant="subtle"
@@ -170,27 +196,39 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                             onClick={handleImportanceToggle}
                             className="ml-auto"
                         >
-                            <Star className={cn(
-                                "h-6 w-6 transition-colors",
-                                optimisticTask!.importance === "high" ? "fill-primary text-primary" : "text-muted-foreground"
-                            )} />
+                            {optimisticTask!.importance === "high" ? (
+                                <IconStarFilled size={24} color="var(--mantine-color-blue-filled)" />
+                            ) : (
+                                <IconStar size={24} color="var(--mantine-color-dimmed)" />
+                            )}
                         </ActionIcon>
-                    </div>
+                    </Group>
 
-                    <div className="space-y-2">
+                    <Stack gap="xs" ml={32}>
                         {checklists.map((item) => (
-                            <div key={item.id} className="flex items-center gap-2 group/item">
+                            <Group key={item.id} gap="sm" wrap="nowrap" className="group/item">
                                 <Checkbox
                                     checked={item.isCompleted}
                                     onChange={(e) => handleToggleStep(item.id, e.currentTarget.checked)}
-                                    size="sm"
+                                    size="xs"
+                                    radius="xl"
+                                    styles={{
+                                        input: {
+                                            borderColor: item.isCompleted ? 'transparent' : (isDark ? 'white' : 'var(--mantine-color-dimmed)'),
+                                            borderWidth: '1px',
+                                        },
+                                        icon: {
+                                            color: isDark ? 'var(--mantine-color-body)' : 'white'
+                                        }
+                                    }}
                                 />
-                                <span className={cn(
-                                    "text-sm flex-1",
-                                    item.isCompleted && "line-through text-muted-foreground"
-                                )}>
+                                <Text component="span" size="sm"
+                                    flex={1}
+                                    td={item.isCompleted ? "line-through" : undefined}
+                                    c={item.isCompleted ? "dimmed" : undefined}
+                                >
                                     {item.title}
-                                </span>
+                                </Text>
                                 <ActionIcon
                                     variant="subtle"
                                     color="gray"
@@ -198,34 +236,37 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                                     className="opacity-0 group-hover/item:opacity-100"
                                     onClick={() => handleDeleteStep(item.id)}
                                 >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    <IconTrash size={16} color="var(--mantine-color-dimmed)" />
                                 </ActionIcon>
-                            </div>
+                            </Group>
                         ))}
-                        <form onSubmit={handleAddStep} className="flex items-center gap-2">
-                            <Plus className="h-4 w-4 text-primary" />
-                            <TextInput
-                                placeholder="Stap toevoegen"
-                                value={newStepTitle}
-                                onChange={(e) => setNewStepTitle(e.currentTarget.value)}
-                                variant="unstyled"
-                                className="flex-1"
-                                styles={{ input: { fontSize: '14px', color: 'var(--mantine-color-primary-6)' } }}
-                            />
+                        <form onSubmit={handleAddStep}>
+                            <Group gap="xs" wrap="nowrap">
+                                <IconPlus size={16} color="var(--mantine-color-blue-filled)" />
+                                <TextInput
+                                    placeholder="Stap toevoegen"
+                                    value={newStepTitle}
+                                    onChange={(e) => setNewStepTitle(e.currentTarget.value)}
+                                    variant="unstyled"
+                                    flex={1}
+                                    styles={{ input: { fontSize: '14px', color: 'var(--mantine-color-primary-6)' } }}
+                                />
+                            </Group>
                         </form>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
 
-                <div className="h-px bg-border my-4" />
-
-                <div className="space-y-1">
+                <Stack gap={4}>
+                    {/* Section 2: Mijn Dag */}
+                <Box>
                     <Button
                         variant="subtle"
-                        color={optimisticTask!.isMyDay ? "blue" : "gray"}
-                        className={cn(
-                            "w-full justify-start gap-3 h-12 font-normal",
-                            optimisticTask!.isMyDay ? "text-primary" : "text-muted-foreground"
-                        )}
+                        c="var(--mantine-color-text)"
+                        fw={400}
+                        justify="flex-start"
+                        fullWidth
+                        h={56}
+                        px="md"
                         onClick={() => {
                             const newIsMyDay = !optimisticTask!.isMyDay
                             startTransition(() => {
@@ -234,10 +275,40 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                             })
                         }}
                     >
-                        <Sun className={cn("h-4 w-4", optimisticTask!.isMyDay && "fill-primary")} />
-                        {optimisticTask!.isMyDay ? "In Mijn dag" : "Aan Mijn dag toevoegen"}
+                        <Group gap="xl" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                            <IconSun size={16} style={{ flexShrink: 0, color: optimisticTask!.isMyDay ? 'var(--mantine-color-yellow-5)' : undefined, fill: optimisticTask!.isMyDay ? 'var(--mantine-color-yellow-5)' : undefined }} />
+                            <Text component="span" truncate>{optimisticTask!.isMyDay ? "Toegevoegd aan Mijn dag" : "Aan Mijn dag toevoegen"}</Text>
+                        </Group>
                     </Button>
+                </Box>
 
+                {/* Section 3: Ooit */}
+                <Box>
+                    <Button
+                        variant="subtle"
+                        c="var(--mantine-color-text)"
+                        fw={400}
+                        justify="flex-start"
+                        fullWidth
+                        h={56}
+                        px="md"
+                        onClick={() => {
+                            const newIsSomeday = !optimisticTask!.isSomeday
+                            startTransition(() => {
+                                setOptimisticTask({ isSomeday: newIsSomeday })
+                                updateTask(optimisticTask!.id, { isSomeday: newIsSomeday })
+                            })
+                        }}
+                    >
+                        <Group gap="xl" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                            <IconBookmark size={16} style={{ flexShrink: 0, color: optimisticTask!.isSomeday ? 'var(--mantine-color-blue-5)' : undefined, fill: optimisticTask!.isSomeday ? 'var(--mantine-color-blue-5)' : undefined }} />
+                            <Text component="span" truncate>{optimisticTask!.isSomeday ? "Toegevoegd aan Ooit" : "Aan Ooit toevoegen"}</Text>
+                        </Group>
+                    </Button>
+                </Box>
+
+                {/* Section 4: Data parameters */}
+                <Stack gap={4}>
                     <ReminderPicker
                         date={optimisticTask!.reminderDateTime}
                         onChange={(date) => {
@@ -257,30 +328,39 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                             })
                         }}
                     />
-                    <Popover position="bottom-start" shadow="md">
+
+                    <Popover position="bottom-end" shadow="md">
                         <Popover.Target>
-                            <Button variant="subtle" color="gray" className="w-full justify-start gap-3 h-12 font-normal">
-                                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                {optimisticTask!.dueDateTime ? format(new Date(optimisticTask!.dueDateTime), "PPP") : "Vervaldatum toevoegen"}
+                            <Button 
+                                variant="subtle" 
+                                c="var(--mantine-color-text)"
+                                fw={400}
+                                justify="flex-start"
+                                className="w-full h-14 font-normal px-4 rounded-none"
+                            >
+                                <Group gap="xl" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+                                    <IconCalendar className="h-4 w-4 shrink-0" />
+                                    <Text component="span" truncate>{optimisticTask!.dueDateTime ? format(new Date(optimisticTask!.dueDateTime), "PPP") : "Vervaldatum toevoegen"}</Text>
+                                </Group>
                             </Button>
                         </Popover.Target>
                         <Popover.Dropdown p={0}>
                             <DatePicker
                                 value={optimisticTask!.dueDateTime ? new Date(optimisticTask!.dueDateTime) : null}
-                                // @ts-expect-error Mantine DatePicker type mismatch in this specific environment
+				// @ts-expect-error type mismatch mantine
                                 onChange={(date: Date | null) => {
                                     startTransition(() => {
                                         setOptimisticTask({ dueDateTime: date || null })
                                         updateTask(optimisticTask!.id, { dueDateTime: date || null })
                                     })
                                 }}
-                                locale="nl"
                             />
                         </Popover.Dropdown>
                     </Popover>
 
                     <ProjectSelector
                         currentProjectId={optimisticTask!.projectId}
+                        projects={projects}
                         onSelect={(projectId) => {
                             startTransition(() => {
                                 setOptimisticTask({ projectId })
@@ -288,11 +368,11 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                             })
                         }}
                     />
-                </div>
+                </Stack>
+                </Stack>
 
-                <div className="h-px bg-border my-4" />
-
-                <div className="flex-1 flex flex-col">
+                {/* Section 5: Note */}
+                <Stack pl="md" pt="md" pb="md" pr={0}>
                     <Textarea
                         placeholder="Notitie toevoegen"
                         value={body}
@@ -302,25 +382,8 @@ export function TaskDetailSheet({ task: initialTask, onClose }: { task: Task | n
                         className="flex-1 min-h-[200px]"
                         styles={{ input: { height: '100%', fontSize: '14px' } }}
                     />
-                </div>
-            </div>
-
-            <div className="p-4 bg-muted/30 border-t flex items-center justify-between sticky bottom-0 left-0 right-0 z-50">
-                <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-muted-foreground italic">
-                        Bijgewerkt op {format(new Date(), "PP")}
-                    </span>
-                    {isPending && (
-                        <span className="text-[10px] text-primary animate-pulse font-medium">
-                            • Bezig met opslaan...
-                        </span>
-                    )}
-                </div>
-                <Button variant="filled" color="blue" onClick={onClose} className="flex items-center gap-2 shadow-lg">
-                    <ChevronRight className="h-4 w-4" />
-                    Back
-                </Button>
-            </div>
-        </div>
+                </Stack>
+            </Box>
+        </Stack>
     )
 }

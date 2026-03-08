@@ -1,55 +1,103 @@
+import { IconChevronLeft, IconChevronRight, IconAdjustmentsHorizontal, IconCheck } from "@tabler/icons-react";
 import React from 'react'
-import { ToolbarProps } from 'react-big-calendar'
-import { ActionIcon, Button, Group, Text } from '@mantine/core'
-import { ChevronLeft, ChevronRight, Globe } from 'lucide-react'
+import { ToolbarProps, View } from 'react-big-calendar'
+import { ActionIcon, Button, Group, Text, Paper, Menu, Box } from '@mantine/core'
 
-export function CustomToolbar(props: ToolbarProps) {
-    const { onNavigate, label } = props
+export interface CustomToolbarProps extends ToolbarProps {
+    hideControls?: boolean;
+}
+
+export function CustomToolbar(props: CustomToolbarProps) {
+    const { onNavigate, label, view, onView, hideControls } = props
 
     const navigate = (action: 'PREV' | 'NEXT' | 'TODAY') => {
         onNavigate(action)
     }
 
+    const views: { value: View; label: string }[] = [
+        { value: 'month', label: 'Maand' },
+        { value: 'week', label: 'Week' },
+        { value: 'work_week', label: 'Werkweek' },
+        { value: 'day', label: 'Dag' },
+        { value: 'agenda', label: 'Lijst' },
+    ]
+
     return (
-        <div className="flex items-center justify-between px-6 py-2.5 bg-slate-50/50">
-            <div className="flex items-center gap-4">
+        <Paper px="md" h="var(--calendar-header-height)" bg="transparent" withBorder={false} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: 0, borderBottom: '1px solid var(--mantine-color-default-border)' }}>
+            <Group justify="space-between" align="center">
                 <Group gap="xs">
-                    <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        onClick={() => navigate('PREV')}
-                        aria-label="Previous"
-                    >
-                        <ChevronLeft size={18} />
-                    </ActionIcon>
-                    <Text fw={600} size="sm" c="dark.8">
+                    {!hideControls && (
+                        <>
+                            <Button
+                                variant="default"
+                                size="md"
+                                onClick={() => navigate('TODAY')}
+                                radius={0}
+                                fw={400}
+                                px="md"
+                                h={36}
+                            >
+                                Vandaag
+                            </Button>
+
+                            <Menu shadow="md" width={150} position="bottom-start">
+                                <Menu.Target>
+                                    <Button 
+                                        variant="default" 
+                                        size="md" 
+                                        radius={0}
+                                        leftSection={<IconAdjustmentsHorizontal size={20} strokeWidth={1} />}
+                                        h={36}
+                                        px="md"
+                                        fw={400}
+                                    >
+                                        {views.find(v => v.value === view)?.label}
+                                    </Button>
+                                </Menu.Target>
+
+                                <Menu.Dropdown>
+                                    <Menu.Label>Weergave</Menu.Label>
+                                    {views.map((v) => (
+                                        <Menu.Item
+                                            key={v.value}
+                                            onClick={() => onView(v.value)}
+                                            leftSection={view === v.value ? <IconCheck size={16} strokeWidth={2} /> : <Box w={16} h={16} />}
+                                            fw={500}
+                                        >
+                                            {v.label}
+                                        </Menu.Item>
+                                    ))}
+                                </Menu.Dropdown>
+                            </Menu>
+                        </>
+                    )}
+                    
+                    <Group gap={0}>
+                        <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            onClick={() => navigate('PREV')}
+                            aria-label="Previous"
+                            size={34}
+                        >
+                            <IconChevronLeft size={20} />
+                        </ActionIcon>
+                        <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            onClick={() => navigate('NEXT')}
+                            aria-label="Next"
+                            size={34}
+                        >
+                            <IconChevronRight size={20} />
+                        </ActionIcon>
+                    </Group>
+
+                    <Text fw={700} size="md" ml="xs">
                         {label}
                     </Text>
-                    <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        onClick={() => navigate('NEXT')}
-                        aria-label="Next"
-                    >
-                        <ChevronRight size={18} />
-                    </ActionIcon>
                 </Group>
-
-                <Button
-                    variant="default"
-                    size="compact-sm"
-                    onClick={() => navigate('TODAY')}
-                    className="border-slate-200 text-slate-700 hover:bg-slate-50"
-                >
-                    Today
-                </Button>
-            </div>
-
-            <div className="flex gap-2">
-                <span className="text-xs font-medium text-slate-500 px-2 flex items-center gap-1">
-                    <Globe size={14} /> GMT+2
-                </span>
-            </div>
-        </div>
+            </Group>
+        </Paper>
     )
 }

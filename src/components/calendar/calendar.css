@@ -1,259 +1,177 @@
-.calendar-container {
-  /* Override react-big-calendar styles to match Stitch designs */
-  --calendar-primary: #2060df;
-  --calendar-primary-hover: #1a4db5;
-  --calendar-border: #f1f5f9;
-  --calendar-border-dark: #e2e8f0;
-  --calendar-bg: #f8fafc;
-  --calendar-surface: #ffffff;
-  --calendar-text-main: #1e293b;
-  --calendar-text-muted: #64748b;
-  --calendar-event-bg: #eff6ff;
-  --calendar-event-border: #2060df;
-  --calendar-event-text: #1e40af;
+/* Prismate Calendar - Mantine-ification Overrides */
+
+:root {
+  --rbc-border-color: var(--mantine-color-default-border);
+  --rbc-inner-border-color: var(--mantine-color-default-border);
+  --rbc-off-range-bg: var(--mantine-color-default-hover);
+  --rbc-today-bg: transparent; /* Verwijderd accent color for today */
+  --rbc-selection-bg: var(--mantine-color-blue-1);
+  --calendar-header-height: 56px;
 }
 
-/* Base resets */
-.rbc-calendar {
-  font-family: inherit;
-  min-height: 600px;
-  background-color: var(--calendar-surface);
-}
-
-/* Header */
-.rbc-month-header, .rbc-time-header {
-  border-bottom: 1px solid var(--calendar-border) !important;
-  background-color: var(--calendar-surface);
-  overflow: visible !important;
-}
-
-.rbc-header {
-  border-bottom: none !important;
-  border-left: 1px solid var(--calendar-border) !important;
-  color: var(--calendar-text-muted);
-  background-color: transparent !important;
-  padding: 0 !important;
-  overflow: visible !important;
-}
-
-.rbc-header:first-child {
-  border-left: none !important;
-}
-
-/* Cells */
-.rbc-day-bg {
-  border-left: 1px solid var(--calendar-border) !important;
-}
-
-.rbc-day-bg:first-child {
-  border-left: none !important;
-}
-
-.rbc-month-row {
-  border-top: 1px solid var(--calendar-border) !important;
-}
-
-/* Today highlight */
-.rbc-today {
-  background-color: rgba(32, 96, 223, 0.05) !important; /* light primary tint */
-}
-
-/* Events */
+/* 1. Neutralize basic event container */
 .rbc-event {
-  background-color: transparent !important;
+  background: transparent !important;
   border: none !important;
   padding: 0 !important;
+  color: inherit !important;
   box-shadow: none !important;
-  transition: all 0.2s;
-}
-
-.rbc-event:hover {
-  filter: brightness(0.95);
-}
-
-.rbc-event-content {
-  height: 100% !important;
-  width: 100% !important;
-  overflow: visible !important;
 }
 
 .rbc-event-label {
-  display: none !important; /* Hide default time label to stop squishing CustomEvent */
+  display: none !important;
 }
 
-/* Toolbar */
-.rbc-toolbar {
-  margin-bottom: 0 !important;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--calendar-border);
-  background-color: rgba(248, 250, 252, 0.5); /* slate-50/50 */
+.rbc-event-content {
+  padding: 0 !important;
 }
 
-.rbc-toolbar button {
-  color: var(--calendar-text-muted) !important;
-  border-color: var(--calendar-border) !important;
-  transition: all 0.2s;
-  background-color: var(--calendar-surface) !important;
-  border-radius: 6px !important;
-  font-weight: 600 !important;
-  font-size: 0.75rem !important;
-  padding: 6px 12px !important;
-}
-
-.rbc-toolbar button:hover {
-  background-color: #f1f5f9 !important; /* slate-100 */
-  color: var(--calendar-text-main) !important;
-}
-
-.rbc-toolbar button:active,
-.rbc-toolbar button.rbc-active {
-  background-color: var(--calendar-primary) !important;
-  color: white !important;
-  border-color: var(--calendar-primary) !important;
-  box-shadow: none !important;
-  background-image: none !important;
-}
-
-.rbc-toolbar-label {
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: var(--calendar-text-main);
-  background-color: var(--calendar-surface);
-  border: 1px solid var(--calendar-border);
-  padding: 4px 12px;
-  border-radius: 9999px; /* full */
-}
-
-/* Off-range days */
-.rbc-off-range-bg {
-  background-color: #f8fafc !important; /* slate-50 */
-}
-
-.rbc-off-range .rbc-date-cell {
-  opacity: 0.4;
-}
-
-/* Date cell text */
-.rbc-date-cell {
-  padding: 4px 8px !important;
-  font-weight: 800;
-  font-size: 0.875rem;
-  color: var(--calendar-text-main);
-  text-align: center;
-}
-
-/* Time Grid */
-.rbc-time-view {
-  border: none !important;
-  border-top: 1px solid var(--calendar-border) !important;
-}
-
-/* Time Grid Content */
-.rbc-time-content {
-  border-top: 1px solid var(--calendar-border) !important;
-  overflow-x: hidden !important; /* Hide the overflow from the breakout time indicator */
-}
-
-/* Base height */
-.rbc-timeslot-group {
-  border-bottom: 1px solid var(--calendar-border) !important;
-  min-height: 60px !important;
-  transition: min-height 0.3s ease;
-}
-
-/* Tall setting */
-.rows-tall .rbc-timeslot-group {
-  min-height: 96px !important;
-}
-
-/* Sidebar Tabs Styling */
-.mantine-Tabs-list {
-  border-bottom: 1px solid #f1f5f9 !important;
-}
-
-.mantine-Tabs-tab {
-  font-family: inherit;
-  transition: all 0.2s ease;
-  color: #64748b;
-  border-bottom-width: 2px !important;
-  border-bottom-color: transparent !important;
-}
-
-.mantine-Tabs-tab[data-active] {
-  color: #2060df !important;
-  border-bottom-color: #2060df !important;
-  background-color: transparent !important;
-}
-
-.mantine-Tabs-tab:hover:not([data-active]) {
-  background-color: #f8fafc !important;
-  border-bottom-color: #e2e8f0 !important;
-}
-
-.rbc-day-slot .rbc-events-container {
-  margin-right: 0 !important; /* Allow events to fill full width */
-}
-
-.rbc-day-slot .rbc-event {
-  border: none !important;
-}
-
-.rbc-time-header-content {
-  min-height: 100px !important;
+/* 2. Grid & Borders */
+.rbc-calendar {
+  font-family: var(--mantine-font-family);
+  flex: 1;
   display: flex !important;
-  overflow: visible !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  border: 1px solid var(--rbc-border-color);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
 }
 
-/* Time labels and alignment */
-.rbc-time-gutter, .rbc-time-header-gutter {
-  width: 64px !important;
-  min-width: 64px !important;
-  max-width: 64px !important;
-  border-right: 1px solid var(--calendar-border) !important;
+.rbc-month-view {
+  flex: 1 1 0% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
 }
 
-.rbc-time-gutter .rbc-label {
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: var(--calendar-text-muted);
-  padding: 0 8px;
-  text-align: right;
+.rbc-month-row {
+  flex: 1 0 0% !important;
+  display: flex !important;
 }
 
-/* Current time indicator */
+.rbc-header {
+  border-bottom: 1px solid var(--rbc-border-color) !important;
+  color: var(--mantine-color-text) !important;
+  font-size: var(--mantine-font-size-xs) !important;
+  font-weight: 700 !important;
+  height: auto !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.rbc-header + .rbc-header {
+  border-left: 1px solid var(--rbc-border-color) !important;
+}
+
+.rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--rbc-border-color) !important;
+}
+
+.rbc-month-row + .rbc-month-row {
+  border-top: 1px solid var(--rbc-border-color) !important;
+}
+
+/* 3. Time Gutter & Grid Slots */
+.rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid var(--rbc-border-color) !important;
+}
+
+.rbc-label {
+  color: var(--mantine-color-dimmed) !important;
+  font-size: var(--mantine-font-size-xs) !important;
+  font-weight: 500 !important;
+  padding: 0 8px !important;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid var(--rbc-inner-border-color) !important;
+  min-height: 40px;
+}
+
+.rbc-day-slot .rbc-timeslot-group {
+  border-bottom: 1px solid var(--rbc-inner-border-color) !important;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: none !important;
+}
+
+/* 4. Background States */
+.rbc-off-range-bg {
+  background-color: var(--rbc-off-range-bg) !important;
+}
+
+.rbc-today {
+  background-color: var(--rbc-today-bg) !important;
+}
+
+.rbc-slot-selection {
+  background-color: var(--rbc-selection-bg) !important;
+}
+
+/* 5. Indicators */
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  border: none !important;
+  background-color: transparent;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0;
+}
 .rbc-current-time-indicator {
-  background-color: transparent !important; /* Hide original red line */
-  height: 1px !important;
-  z-index: 5 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: auto !important;
-  pointer-events: none;
+  background-color: var(--mantine-color-blue-6) !important;
+  height: 2px !important;
 }
 
 .rbc-current-time-indicator::before {
-  content: '';
+  content: "";
   position: absolute;
-  left: -2000px; /* Break out to the left */
-  right: -2000px; /* Break out to the right */
-  top: 0;
-  height: 1.5px;
-  background-color: #ef4444; /* red-500 */
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--mantine-color-blue-6);
+  border-radius: 50%;
 }
 
-/* Time Label Bubble */
-.rbc-current-time-indicator::after {
-  content: var(--current-time, "");
-  position: absolute;
-  left: -58px; /* Offset to sit in the gutter */
-  top: -10px;
-  background-color: #ef4444;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+/* 6. Layout Fixes */
+.rbc-calendar .rbc-month-view {
+  flex: 1 1 0% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.rbc-calendar .rbc-month-view .rbc-month-row {
+  flex: 1 0 0% !important;
+  display: flex !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.rbc-header {
+  height: auto !important;
+  min-height: 60px !important;
+  overflow: visible !important;
+}
+
+.rows-tall .rbc-timeslot-group {
+  min-height: 80px !important;
+}
+
+/* 7. Sidebar Tabs Overrides */
+.sidebar-tabs .mantine-Tabs-tab[data-active="true"] {
+  background-color: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  box-shadow: var(--mantine-shadow-sm);
+}
+
+.sidebar-tabs .mantine-Tabs-tab[data-active="true"]:hover {
+  background-color: var(--mantine-color-body);
 }

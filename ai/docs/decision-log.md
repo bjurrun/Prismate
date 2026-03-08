@@ -329,3 +329,222 @@
 
 - **Besluit**: De ThemeToggle button is vervangen door een Mantine `Switch` component met `thumbIcon`, volledig gestileerd in indigo tinten en verfijnde iconen (1.2pt stroke).
 - **Rationale**: Verbetering van de visuele feedback en interactie in de sidebar, waarbij de actieve modus (Sun/Moon) direct in de switch thumb zichtbaar is conform de Mantine documentatie.
+  UI Redesign: /tasks pagina omgebouwd naar floating cards layout voor takenlijsten met quick-add verplaatst naar boven.
+  UI Redesign V2: /tasks styling geupdate naar zuivere Mantine cards op basis van RCA. Check via browser subagent geslaagd.
+  Styling tweaks verwerkt: padding 20px eraf gehaald om kaders door te laten lopen, extra borders erbij. Achtergrond kolom 2 gebruikt Tailwind variabele en dark variant in plaats van vaste Mantine props.
+  Rechterkolom omgezet naar smalle 20% grid-kolom en detailvenster daarin vastgezet voor inline editing (niet-floating in page.tsx mode)
+  Smart list 'Ooit' (tasks without date and project) added met bookmark icon. Link gedeeld in zowel desktop Sidebar als mobile Sidebar.
+  De icoonkleuren op de smart lists in System Views (sidebar, taken dashboard, planner menu) zijn geconsolideerd. Geel/oranje (amber-500) voor Mijn Dag & rood (red-500) voor belangerijk/ster
+  Ooit toegevoegd als volwaardige database flag (isSomeday) ipv. null-filter. Toegevoegd aan TaskDetailSheet en als inline quick-add toggle (MyDay, Belangrijk, Ooit) in actiebalk.
+  Ooit categorie badge + specifieke indigo icoon nu zichtbaar op taakregels in overzichtelijsten, analoog aan Mijn Dag in TaskRowItem.
+  De marges/paddings links, rechts en strak boven de taakregelkolom in /tasks zijn verdubbeld voor een rustiger blikveld.
+  TaskDetailSheet (Detail panel rechts) gerestyled als witte kaarten (cards) conform MS To-Do opzet. Lange titels hebben extra ruimte, pick-a-category weggelaten, active toggles lichten op met standaard tekstkleur en icon-accentkleur.
+  Detail panel (TaskDetailSheet) ontdaan van container achtergrondkleur en card-structuren om horizontale marges weg te nemen. Alles is nu uitgelijnd van rand tot rand en de iconen en paddings van Agenda, Projecten, Reminder en Recurrence match nu 1:1 de MS To Do layout.
+  Alle knoppen in de taakdetails (herinner mij, herhalen, vervaldatum, projecten) links uitgelijnd via de Mantine justify-prop en de linkermarges genormaliseerd.
+  Styling van knoppen in de taakdetailskolom (gap, padding, fontkleur, fontgewicht) aangepast (gap-3, px-3, fontWeight 400 en zwarte tekstkleur via '--mantine-color-text') zodat deze identiek zijn aan de items in de navigatie-sidebar (takenlijsten).
+  Verschillen tussen linkermenu en rechter detailpanel waargenomen en exact 1:1 gladgestreken: gap-4, px-4, fw=400, en c='var(--mantine-color-text)' geïmplementeerd in detailpanel.
+  Alle dividers uit het taakdetail panel (TaskDetailSheet) zijn verwijderd en er is 'space-y-1' layout aan toegevoegd, analoog aan de linkermenu's.
+  Afstand tussen iconen en tekstlabels in het detailpaneel met 8px vergroot (gap-6 geïmplementeerd) voor een ruimere uitstraling en meer ademruimte.
+  Mantine Button-layout geforceerd door de 'children' nu expliciet te wrappen in 'flex items-center gap-5'. Dit verhelpt het probleem met de genegeerde Tailwind 'gap' property, waardoor de tekst nu visueel perfect wegschuift van het icoon (8px winst) en uitlijnt met de Sidebar lijsten.
+  Datum-parsing toegevoegd aan actions.ts om 'Invalid value for argument dueDateTime' op te lossen. Daarnaast 'width="target"' verwijderd bij de ReminderPicker zodat de button niet langer ten onrechte oprekt.
+
+## [2026-03-01] Vandaag Layout Refactor (50/50)
+
+- **Keuze**: Layout van de `/vandaag` pagina (`VandaagView.tsx`) aangepast naar een 50/50 split tussen Taken/Notities en de Agenda, met consistente kleuren vanuit `/tasks` (`gray-0`/`dark-8` voor de linkerkolom, `white`/`dark-7` voor de rechterkolom) en verwijdering van inline Card-styling.
+- **Rationale**: Minimaliseren van overbodige kolommen, standaardiseren op de modulaire Mantine-layout en achtergrondkleuren 1:1 alignen met het taakoverzicht voor een consistente rustige interface in zowel light als dark mode.
+  Icoon groottes in het detail paneel verkleind van 'h-5 w-5' naar 'h-4 w-4' voor visuele harmonie en verfijning.
+  Taak detail paneel lay-out geoptimaliseerd voor smalle kolommen: 'min-w-0' toegevoegd voor geforceerde text-truncatie en rechter padding ('pr-0') verwijderd om overlopen te voorkomen. De project picker en datumbereiken blijven nu strak binnen de 20% breedte kolommen.
+
+## [2026-03-01] User Avatar naar Top Bar
+
+- **Besluit**: De user avatar en bijbehorende menu popover zijn verplaatst van de navigatie-sidebar naar de rechterkant van de bovenste top bar.
+- **Rationale**: Verbeteren van de globale navigatie-hiërarchie waarbij profielinstellingen en sessiebeheer consistent in de header-context staan.
+- **Actie**: `UserNav` verwijderd uit `AppSidebar` en geïntegreerd in de `AppShell` header Group, inclusief layout-fix voor perfecte uitlijning met actie-iconen.
+
+## [2026-03-01] Project Titels Truncatie
+
+- **Besluit**: Implementatie van truncatie (`truncate`) op alle projecttitels in de sidebar, project selector en taakregels.
+- **Rationale**: Voorkomen dat lange projectnamen de interface breken of naar meerdere regels wrappen, conform Microsoft-esthetiek en GRIP-discipline.
+- **Actie**: Gebruik van Mantine `<Text truncate="end">` in `ProjectSidebar`, `ProjectSelector` en `TaskRowItem`.
+
+## [2026-03-01] Corner Radius & Project Typografie
+
+- **Keuze**: Globale instelling van corner-radius op 0 voor alle cards en UI-elementen, en synchronisatie van project-typografie met slimme lijsten in de sidebar.
+- **Rationale**: Realiseren van een strakke, hoekige esthetiek conform gebruikerswens en borgen van visuele consistentie in de navigatie. Aanpassing van task row titel font weight naar 400. Verkleining van checkbox, vergroting van rij-afstand en aanpassing kleur voltooide taken (nu ook geoptimaliseerd voor dark mode). Migratie van het taakdetailvenster van een vaste kolom naar een Drawer op de /tasks pagina voor een schonere layout. Aanpassing van de AppShell naar 'alt' layout voor een navbar over de volledige hoogte.
+
+## [2026-03-01] Performance & Hydration Fixes /tasks
+
+- **Besluit**: Hydratatie-fouten opgelost via `suppressHydrationWarning`, context-loop in Header geëlimineerd via memoizatie, en taak-detail loading versneld door projects data-prop door te geven en URL-sync loop te fixen.
+- **Rationale**: De 'endless compiling' en tragere UI-respons werden veroorzaakt door onnodige Server Action calls en React re-render loops in de context-providers en URL-listeners.
+
+## [2026-03-01] Inklapbare Navigatie Sidebar
+
+- Implementatie van een inklapbare navigatie-sidebar op de takenpagina met hamburger-toggle en auto-collapse onder 900px.
+
+## [2026-03-01] Optimalisatie van Component-Tree & Referentiële Stabiliteit
+
+- Implementatie van referentiële stabiliteit in Hooks en optimalisatie van de component-tree om overmatige re-renders te voorkomen.
+- **RCA & Fixes**: handlers in `useCalendarEvents` gememoiseerd via `useCallback`, `SharedCalendarWidget` en `TaskRowItem` omgezet naar `React.memo`, en `useSearchParams` uit individuele lijstitems verwijderd om cascade-renders bij URL-wijzigingen te voorkomen.
+
+## [2026-03-01] Vaststellen van architectonische performance-hypotheses
+
+- **Audit**: Analyse van Clerk-integratie en Mantine-hydratatie.
+- **Resultaat**: Hypothese 1 (Auth-State Handshake) vastgesteld als hoofdoorzaak van de initiële 'flash' en visuele instabiliteit, versterkt door layout-shifts in Mantine's responsive componenten (Hypothese 2).
+
+## [2026-03-01] Stabilisatie van Auth-handshake & CLS Optimalisatie
+
+- **Fix**: Rendering van AppShell uitgesteld tot Clerk isLoaded true is om hydration mismatches en de auth-flash te voorkomen.
+- **Layout**: Mantine AppShell geforceerd op vaste dimensies (Header 60px, Navbar 80px) via CSS-props om Layout Shifts te elimineren.
+- **Skeletons**: "Laden..." placeholders en spinners in TaskList, VandaagView en CalendarView vervangen door structurele Skeleton componenten voor een rustigere visuele opbouw.
+
+## [2026-03-01] Mobile Tasks Navigatie & Long-Press
+
+- **Besluit**: Implementatie van mobile-first layout met long-press bulk acties en fullscreen navigatie voor de `/tasks` view.
+- **Rationale**: Realiseren van een native-app gevoel op mobiele apparaten door de Sidebar en Takenlijst als onafhankelijke fullscreen views te presenteren. Het gebruik van long-press (met haptische feedback) activeert de bulk-selectie actiebalk conform moderne mobiele ontwerppatronen.
+- **Actie**: `TaskView` geüpdatet met `isMobile` conditionele rendering voor navigatie via een terug-knop, `TaskRowItem` voorzien van 500ms long-press detectie, en `TaskList` uitgerust met bulk-selectie toggling.
+
+## [2026-03-01] Mobile Navigatie Menu Update
+
+- **Besluit**: De mobiele navigatie is 1:1 gesynchroniseerd met de desktop sidebar en iconen zijn over de volledige breedte gecentreerd zonder tekstlabels.
+- **Rationale**: Realiseren van visuele consistentie tussen systemen en creëren van een rustigere `AppShell.Footer` die fungeert als een native tab-bar.
+- **Actie**: Tekstlabels uit `MobileNavItem` verwijderd, layout geüpdatet met `justify="space-between"`, en de `/agenda` link is verborgen conform focus-methodiek.
+
+## [2026-03-01] Layout-fix VandaagView
+
+- Layout-fix VandaagView: implementatie van responsive SimpleGrid en vloeibare containers voor correcte breedte-proporties.
+
+## [2026-03-02] CSS Layout-fix TaskRowItem
+
+- Bugfix TaskRowItem: Stack container gewijzigd naar `flex-1` om extreme woordafbreking (smalle verticale letters) in de sidebar componenten te verhelpen.
+
+## [2026-03-02] Vandaag Layout Refactor (Flex/Master-Detail)
+
+- **Besluit**: De gehele VandaagView layout (`/vandaag`) is geherstructureerd van een `SimpleGrid` (3-kolommen) naar een Flexbox Master-Detail layout, vergelijkbaar met `/tasks`.
+- **Implementatie**: Oude agendarender-logica verwijderd. Een nieuwe `VandaagSidebar` gecreëerd met links voor Zoeken, Inbox, Dagplan en Nieuw (Project, Klant, Factuur, Offerte). Dit is gebaseerd op een strakker navigatiemodel. Inhoud in het detail-paneel wordt placeholder tekst voor Inbox/Dagplan conform verzoek.
+
+## [2026-03-02] Taaktellers in /tasks Navigatie
+
+- **Besluit**: Tellers toegevoegd aan de lijst- en projectnavigatie in de sidebar van de `/tasks` view.
+- **Implementatie**: Single-query fetch toegevoegd aan `page.tsx` om `isMyDay`, `isImportant`, `dueDateTime` en `projectId` flags van alle openstaande taken in één keer op te halen. Deze efficiënte in-memory telling voorkomt meerdere losse database queries. De tellingen (`counts`) worden als prop doorgegeven aan `TaskView` en `ProjectSidebar`, waar ze getoond worden via de `rightSection`-prop in een subtiele `<Text>` component.
+- Verwijdering van de mobiele bottom navigation bar uit \`app-shell.tsx\` om de dubbele scrollbalk op desktop op te lossen.
+- Vervanging van \`Text\` door \`Badge\` component voor de tellers in \`ProjectSidebar.tsx\` om consistentie te creëren met de \`/vandaag\` weergave.
+- Verandering van Badge kleur naar `indigo` in `ProjectSidebar.tsx` voor consistentie met `/vandaag` weergave.
+
+## [2026-03-02] Vandaag Inbox Architectuur & Prullenbak
+
+- **Besluit**: Implementatie van een 3-koloms layout voor de Vandaag Inbox (Sidebar, Inbox Table, Detail Panel) en toevoeging van Prisma modellen `InboxItem`, `Note`, en `File`.
+- **Rationale**: Creëren van een centrale 'unified' plek voor losse notities, bestanden en flagged emails. Door `deletedAt` toe te voegen creëren we direct een soft-delete (Prullenbak) structuur die vanuit de Sidebar te benaderen is.
+- **Actie**: Prisma schema uitgebreid en gesynchroniseerd; `VandaagInbox` en `InboxDetailPanel` componenten gerealiseerd met Mantine UI.
+
+## [2026-03-02] Migratie Iconografie: Heroicons n. Tabler
+
+- **Besluit**: Volledige migratie van `@heroicons/react` naar `@tabler/icons-react` gerealiseerd voor betere visuele opties en consistentie.
+- **Rationale**: Uitbreiden van functionele en visuele keuze binnen de Mantine/Prismate omgeving. Basis line-weight blijft 2px (default van Tabler).
+
+## [2026-03-02] Verfijning Iconografie & Stroke
+
+- **Besluit**: Klanten, Doelen en Week iconen in navigatie vervangen door resp. IconId, Trophy en CalendarMonth. IconMail in de Inbox vervangen door IconFlag3.
+- **Besluit**: Alle Tabler iconen applicatie-breed op een subtielere stroke-dikte van 1.2 gezet. Voltooid lijst icoon aangepast naar check icon.
+- **Rationale**: Verfijning van de interface en nauwkeurigere visuele semantiek afgestemd op de functionaliteiten van de app.
+
+## [2026-03-04] Configuratie van Mantine Spotlight
+
+- "Configuratie van Mantine Spotlight met gestructureerde GRIP-acties en icon-gebaseerde actie-layout."
+- "Mapping van Spotlight-acties aan GRIP-specifieke routes en Tabler-iconen vastgelegd."
+
+## [2026-03-04] Notes Sidebar & Schema Update
+
+- Migratie uitgevoerd voor isPinned en tags velden; start bouw metadata-gedreven sidebar.
+- Implementatie van Sidebar-onderdelen voor Notes: Pinned, Projecten en Tags met Mantine UI-elementen.
+- Bouw van de NoteCard component en implementatie van de centrale Notes Feed met Prisma-filtering in een 3-koloms layout.
+- Styling van tags toegevoegd (distinctieve Mantine kleuren per tag, fw=400) en klikbare NoteCards die routeren naar '?noteId=' voor in-place detailweergave.
+- Visuele update Notes Feed: achtergrond aangepast naar standaard body-kleur, kaarten omgezet naar Mantine Card met borders en extra padding/marges.
+- Integratie van de BlockNote editor in de Notes module, inclusief useDebouncedCallback voor auto-save functionaliteit en next/dynamic loader.
+- Implementatie van createNote flow, metadata header met TagsInput en project-integratie, en auto-focus logica voor de editor.
+- UI Verfijningen in NotesView: Editor styling uitgelijnd naar links, notitietitel is nu inline bewerkbaar met debounced saves, en metadata gelaagd (tags + project) met strakke strokes.
+- Vervanging van IconStar door IconHeart (outline/filled) in de NotesSidebar voor 'Favorites', inclusief actieve URL-filtering (`?pinned=true`).
+- Toevoegen van een "favoriet/pinned" toggle functionaliteit voor notities met outline (inactief) en filled (actief) hartjes, beschikbaar in zowel de notitiekaart (`NoteCard`) via een actie-icoon uitgelijnd onder de datum als na de titel in het bewerkscherm (`NotesView`).
+- Refactor van `/notes` feed naar een Mantine Table-gebaseerde lijstweergave in de stijl van `/vandaag`.
+- Automatische selectie van de nieuwste notitie geïmplementeerd en notitie metadata omgebouwd naar een uitklapbaar (Accordion) eigenschappen-paneel geïnspireerd op Obsidian.
+- Styling tweaks voor NoteMetadataHeader: Chevron naar links verplaatst, tekstkleur zwart gemaakt, velden volledige breedte gegeven.
+- Tags en Project selectors in eigenschappen sectie weer hun normale breedte gegeven
+- Min-width (200px) toegevoegd aan Project Select zodat lange namen niet op een tweede regel wrappen
+- Dropdown breedte van Project selector dynamisch gemaakt (max-content) via comboboxProps om text wrapping in opties te voorkomen
+- Text labels in eigenschappen sectie ('Status', 'Aangemaakt', etc) rechts uitgelijnd via ta='right'
+- Padding aan rechterkant van Project Select input toegevoegd om overlap met het clear/dropdown icoon te voorkomen
+- Tags en Project Selects in /notes properties weer ingesteld op flex: 1 voor volledige breedte om tekstafkapping te maximaliseren
+- Het input veld van Project Selects schaalt nu dynamisch mee met de lengte van de langste projectoptie in de lijst via een 'ch' (character) basis, om premature truncations en onnodige flex uitrekking te voorkomen
+- Fontgrootte van 'Eigenschappen' accordion label naar 13px verkleind
+- Eigenschappen accordion label font-size aangepast naar standaard var(--mantine-font-size-sm) token in plaats van hardcoded px waarde
+- Het font van Eigenschappen verkleind naar var(--mantine-font-size-xs)
+- Font sizes van alle labels en waarden binnen de Eigenschappen sectie verkleind van 'sm' naar 'xs' via Mantine props
+- Font grootte binnen de 'Eigenschappen' (labels, tags, project selector) teruggezet van 'xs' naar de standaard 'sm' (en var(--mantine-font-size-sm))
+
+## [2026-03-06] Crosslink (BlockNote Mentions) Styling & Filter Logica
+
+- **Keuze**: Volledige integratie van de entiteit-filters direct binnen de BlockNote `SuggestionMenuController` en dynamische verwijdering van het `@` trigger-karakter via Tiptap's `deleteRange` command. De BlockNote `<a href>` styling is via CSS aangepast naar Mantine's `indigo` zonder bold `font-weight`. Bovendien is er een Tabler `arrow-up-right` icoon (stroke 1) toegevoegd middels een inline CSS pseudo-element (`::before`) en een SVG `mask`, wat ervoor zorgt dat de kleur altijd overeenkomst met de crosslink ("currentColor").
+- **Rationale**: Minimalistische en native bewerkervaring waar links natuurlijk opgaan in de tekst maar dankzij de indigo tint toch direct herkenbaar zijn als applicatie-entiteiten. Een subtiel icoon links van de link bevestigt de functie als uitgaande verwijzing zonder de flow te onderbreken.
+
+## [2026-03-07] Crosslink Command Palette UI & Contextual Search
+
+- **Keuze**: Ombouwen van het zwevende suggestiemenu naar een gecentreerde Command Palette overlay gestyled als Mantine's Spotlight met server-side context injectie (projectId) voor suggesties op basis van associatie als er geen zoekterm is.
+- **Rationale**: Hergebruik van vertrouwde Spotlight UX componenten helpt de gebruiker sneller filteren en het serveren van gecontextualiseerde default suggesties bijlegeerd aan het huidige project/klant minimaliseert type-handelingen.
+
+## [2026-03-07] Fixes BlockNote Slash Menu & Toggle List Degradering
+
+- **Keuze**: Implementeren van een éénmalige `editor.replaceBlocks` initialisatie (`initializedRef`), ten faveure van de eerdere custom `SuggestionMenuController` hack die op sommige React-versies averechts werkte of botste met de headless UI.
+- **Rationale**: De oorzaak van de trigger-slash (`/`) bugs én het degraderen van Toggle Lists bleek identiek: door debounced auto-saves triggert React re-renders waarbij `editor.replaceBlocks` met omgezette Markdown-inhoud werd ingeladen _tijdens_ live typing. De `replaceBlocks` fix voorkomt overschrijvingen vanuit lossy Markdown en corrigeert direct de slash menu enter-key interrupties zonder de built-in UI aan te tasten.
+
+## [2026-03-07] NavLink Styling voor Feed Regels
+
+- **Keuze**: Introductie van een globale `.feed-row` CSS klasse in `globals.css` die exact het visuele gedrag van een actieve Mantine NavLink (variant light, color indigo) repliceert voor hover en focus staten op feed items in de '/vandaag', '/notes' en '/tasks' pagina's.
+- **Rationale**: Realiseren van een consistente, premium Mantine UX component styling voor overzichtslijsten.
+- **Keuze**: Volledige conversie van `/tasks` layout naar Mantine `<Table>` analoog aan NotesFeed, waarbij `TaskRowItem` nu `<Table.Tr>` gebruikt. Animaties van TasksFeed zijn wegens de HTML tabel-compliance verwijderd ter behoeve van styling conformiteit.
+- **Keuze**: De datum-kolom ("Datum") is verwijderd en de vervaldatum van de taak is nu strak uitgelijnd boven het favorieten (ster) icoon in de meest rechtse actie-div, passend in de 100px ruimte.
+- **Keuze**: De `/tasks` layout is weer EXACT ingericht als de 3-kolommen structuur van `/notes`. Kolom 2 (de taken-feed) is vast gezet op een maximale breedte van 480px mét border-right, en Kolom 3 is een onzichtbare flexibele opvulling (`flex: 1`).
+- **Bugfix**: `TaskRow.tsx` gaf een `<div>` terug die `TaskRowItem` (wat resulteert in een `<Table.Tr>`) direct wipte binnen in `<Table.Tbody>`. Dit is ongeldige HTML (div binnen tbody) waardoor de browser voor elke row de tabel-layout regels afbrak en breedtes dynamisch ging berekenen afhankelijk van content. gebruikt nu `forwardRef` om direct de ref en dragger styles de ontvangen op het `<Table.Tr>` element zónder invalide div wrapper, hierdoor lijnen alle rijen weer 100% strak uit.
+- **Keuze**: De layout van `/tasks` is weer teruggebracht naar een volledige breedte (`flex: 1`) voor de lijst met taken in plaats van de 480px brede kolom-aanpak, om de leesbaarheid en ruimte van de data-rij te maximaliseren.
+- **Fix**: De `<Text>` component in `TaskRowItem.tsx` voor de weergave van de hoofdtitle van een taak is nu verrijkt met `lineClamp={2}`. Lange titels breken nu dus af met weglatingstekens (...), waardoor ze geen excessieve hoogte opnemen in de nieuwe Table layout.
+- **Fix**: Horizontale padding op de parent container in `/tasks` verwijderd (net zoals bij `/notes`) en direct toegepast d.m.v. `horizontalSpacing` op de child `<Table>` (en op de groepsheaders). Hierdoor lopen de interactieve row componenten strak tot aan de boorden en verspringt de achtergrond op hover netjes van de fysieke schermrand naar schermrand, gelijk aan de behavior in notes.
+
+- Zuivering Fase 1 uitgevoerd: Verwijdering van Shadcn/Radix-UI boilerplate klonen (CVA, tailwind-merge, clsx, lucide-react, framer-motion) en restrictie van cn() utility ten faveure van zuivere Mantine UI componenten en @tabler/icons.
+- Zuivering Fase 2 uitgevoerd: Verwijdering van Tailwind typografieklassen in HTML tags en volledige vervanging door Mantine `Text` en `Title` componenten.
+- Zuivering Fase 3 uitgevoerd: Vele Tailwind gebaseerde `div` en lay-out elementen (`flex`, `space`, `grid`) in formulieren, modale sheets en sidebars vervangen door Mantine componenten (`Stack`, `Group`, `Box`, `Flex`) incl. spacing attributen.
+- Zuivering Fase 4 uitgevoerd: Alle hardcoded Tailwind kleuren (`text-gray-*`, `bg-gray-*`, `border-gray-*`, `text-slate-*`, `bg-white`, `text-muted-foreground`, `bg-muted`) vervangen door Mantine CSS variabelen (`--mantine-color-dimmed`, `--mantine-color-body`, `--mantine-color-text`, `--mantine-color-default-border`, `--mantine-color-default-hover`, etc.) in 15+ bestanden. Lucide-react import in app-sidebar.tsx vervangen door @tabler/icons-react aliassen.
+- **Stock Mantine Migratie**: Volledige Shadcn/Radix CSS-laag (160 regels design tokens) verwijderd uit `globals.css`. Mantine theme gecentraliseerd met component defaults voor NavLink, ActionIcon, Button, TextInput, Badge, Drawer, Popover, Menu, Modal, Tabs, Tooltip. Alle `text-primary`/`bg-primary` Shadcn tokens in 20+ plekken vervangen door Mantine `--mantine-color-indigo-*` variabelen. Alle redundante NavLink `styles={{}}` hover overrides (17 instanties) verwijderd. Clerk auth pagina's gemigreerd naar Mantine vars. Nul Shadcn design tokens blijven over.
+- **Stock Mantine Component Rewrites**: Volledige herschrijvingen van `app-sidebar.tsx` (NavLink+Stack+Box ipv nav/button/div), `user-nav.tsx` (UnstyledButton+Stack+Group+Divider ipv button/div), `VandaagSidebar.tsx` (nul classNames), `ProjectSidebar.tsx` (nul classNames, ColorSwatch voor project dot), `theme-toggle.tsx` (Switch color prop ipv styles override), `page.tsx` (Stack+Box+Container ipv divs). className-gebruik: 380 → 305. styles-overrides: 45 → 25. kale divs: 45 → 30.
+- **Stock Mantine Ronde 2**: Herschrijving van `NotesSidebar.tsx`, `SidebarContent.tsx` (SmartNavItem custom component vervangen door stock NavLink), `TaskSidebar.tsx` (alle divs → Stack/Box/Group, cn() verwijderd), `TaskRowItem.tsx` (alle icon classNames → props, cn() verwijderd), `TaskDetailSheet.tsx` (icon classNames → props, cn() verwijderd, className button → Mantine props). Eindtellingen: className 305 → 217, cn() 15 → 12, divs 30 → 23, styles 25 → 25.
+
+## [2026-03-08] Implementatie Double Navbar & Stock AppShell
+
+- **Keuze**: Implementatie van de Double Navbar (Primary Icon Bar + Secondary Content Bar) en migratie naar de officiële Mantine AppShell-structuur.
+- **Rationale**: Minimalisering van UI-ruis en standaardisering op de Mantine navigatie-patronen voor een rustigere, premium ervaring met consistente sidebar-toegang over de hele app.
+
+## [2026-03-08] Mantine Theme & CSS Variables Update
+
+- **Keuze**: Update van `mantineTheme` en `mantineCssVariableResolver` conform de nieuwe configuratie van de founder, inclusief herintroductie van rounded corners (`radius: md`) voor Paper en Card en primary color `"blue"`.
+- **Rationale**: Realiseren van de gewenste visuele taal van de founder en verdere standaardisering van de Mantine component-configuratie.
+
+## [2026-03-08] Stock Mantine Migratie & Style Purge
+
+- **Keuze**: Volledige migratie naar "Stock Mantine" door verwijdering van alle custom CSS, inline styles (`style={{}}`) en hardcoded kleur-referenties (indigo/blue/hex) applicatiebreed.
+- **Rationale**: Realiseren van een consistent, centraal beheerd UI-systeem waarbij alle styling uitsluitend via het Mantine theme en component props wordt aangestuurd.
+
+## [2026-03-08] Stock Mantine Unificatie & Navigatie Stabiliteit
+
+- **Keuze**: Volledige unificatie van de UI naar "Stock Mantine" door verwijdering van alle custom CSS, inline styles en Tailwind afwijkingen. Implementatie van `DoubleNavbar` binnen de officiële `AppShell`.
+- **Rationale**: Borgen van technische soberheid en stabiliteit. De `startsWith` crashes zijn verholpen door defensieve checks en migratie naar native Next.js `Link` componenten in de navigatie.
+- **Resultaat**: 100% Mantine-conformiteit en een robuuste, crash-vrije navigatie-ervaring.
+- Defensieve prop-validatie toegevoegd aan NavbarLink om interne Next.js Link crashes bij undefined hrefs te voorkomen.
+- Tijdelijke fallback naar standaard anker-tags in Navbar om corrupte Next.js 16 router-context te isoleren.
+- RCA Finale Conclusie: De Navbar `startsWith` crash werd veroorzaakt door het doorgeven van niet-bestaande Mantine colortokens (bijv. `'blue.light'`) aan de `bg` en `c` system-props van `UnstyledButton`. Mantine's interne CSS/color parser liep stuk op de afwezige variant. Dit is permanent opgelost door het correcte `ActionIcon` component in te zetten.
+- Kleurenpalet applicatie uitgebreid: Vier custom kleurpaletten toegevoegd aan het Mantine thema (`blue-spruce`, `alice-blue`, `raspberry`, `honey-bronze`), elk met 10 tinten conform Mantine's color tuple structuur. De standaard `primaryColor` blijft `blue`.
+
+## [2026-03-08] App Shell Migratie naar Griply-stijl
+
+- **Keuze**: Volledige herstructurering van de app-shell naar Griply-stijl: `layout="alt"` (full-height navbar), header verwijderd, single-column navbar (NavbarSearch pattern), Paper card-in-background voor main content, `DoubleNavbar.module.css` volledig verwijderd.
+- **Rationale**: Realiseren van een premium, native-desktop uitstraling met een warme, afgeronde content-kaart en een compacte tekst-navigatie zonder icon-rail.
+- **Update**: Verfijning van visuele hiërarchie in navbar (headers donkerder, items lichter, geen uppercase meer) en implementatie van een universele Toolbar binnen het main paneel (titel, weergave-toggle placeholders, actieknoppen). Achtergrondkleuren aangepast naar `gray-1` voor betere diepte.
+- **Tasks View Optimalisatie**: Implementatie van Tabs voor slimme lijsten (Mijn dag, Belangrijk, Gepland), verwijdering van redundante tabel-headers, en edge-to-edge layout door reductie van marges en paddings.
+- **Dynamic Multi-filter**: Toevoeging van een multi-select filtermenu in de Toolbar voor het gelijktijdig bekijken van meerdere projecten en takenlijsten via URL-gesynchroniseerde state.
+- **UI consistentie**: Toolbar actieknoppen (Filter) visueel gelijkgetrokken met weergave-opties middels de `default` variant van Mantine.

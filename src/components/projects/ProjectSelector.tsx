@@ -1,11 +1,10 @@
 'use client'
+import { IconSelector, IconBriefcase, IconPlus, IconList } from "@tabler/icons-react";
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Briefcase } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button, TextInput, Popover, UnstyledButton, Stack, ScrollArea } from "@mantine/core"
+
+import { Button, TextInput, Popover, UnstyledButton, Stack, ScrollArea, Text, Box, Group, Divider } from "@mantine/core"
 import { getProjects, createProjectAction } from "@/app/actions"
-import { Loader2, Plus } from "lucide-react"
 
 interface Project {
     id: string
@@ -17,17 +16,21 @@ interface ProjectSelectorProps {
     onSelect: (projectId: string | null) => void
 }
 
-export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorProps) {
+export function ProjectSelector({ currentProjectId, onSelect, projects: initialProjects }: ProjectSelectorProps & { projects?: Project[] }) {
     const [open, setOpen] = React.useState(false)
-    const [projects, setProjects] = React.useState<Project[]>([])
+    const [projects, setProjects] = React.useState<Project[]>(initialProjects || [])
     const [isCreating, setIsCreating] = React.useState(false)
     const [newProjectName, setNewProjectName] = React.useState("")
     const [searchQuery, setSearchQuery] = React.useState("")
     const [isLoading, setIsLoading] = React.useState(false)
 
     React.useEffect(() => {
-        getProjects().then(setProjects)
-    }, [])
+        if (!initialProjects) {
+            getProjects().then(setProjects)
+        } else {
+            setProjects(initialProjects)
+        }
+    }, [initialProjects])
 
     const selectedProject = projects.find((p) => p.id === currentProjectId)
 
@@ -61,24 +64,32 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                 setNewProjectName("")
                 setSearchQuery("")
             }
-        }} width="target" position="bottom-start" shadow="md">
+        }} width="target" position="bottom-end" shadow="md">
             <Popover.Target>
                 <Button
                     variant="subtle"
-                    color="gray"
+                    c="var(--mantine-color-text)"
+                    fw={400}
+                    justify="flex-start"
                     role="combobox"
                     aria-expanded={open}
                     onClick={() => setOpen((o) => !o)}
-                    className="w-full justify-start gap-3 h-12 font-normal"
+                    fullWidth
+                    h={56}
+                    px="md"
                 >
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    {selectedProject ? selectedProject.displayName : "Project toevoegen"}
-                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                    <Group gap="xl" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+                        <IconBriefcase size={16} style={{ flexShrink: 0 }} />
+                        <Text component="span" truncate style={{ flex: 1 }}>
+                            {selectedProject ? selectedProject.displayName : "Project toevoegen"}
+                        </Text>
+                        <IconSelector size={16} style={{ flexShrink: 0, opacity: 0.5 }} />
+                    </Group>
                 </Button>
             </Popover.Target>
             <Popover.Dropdown p={0}>
                 {isCreating ? (
-                    <div className="p-3 space-y-3">
+                    <Stack p="sm" gap="sm">
                         <TextInput
                             placeholder="Project naam..."
                             value={newProjectName}
@@ -87,14 +98,14 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                             disabled={isLoading}
                             autoFocus
                         />
-                        <div className="flex gap-2">
+                        <Group gap="xs" grow>
                             <Button
                                 size="sm"
-                                className="flex-1"
                                 onClick={handleCreateProject}
                                 disabled={isLoading}
+                                loading={isLoading}
                             >
-                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Opslaan"}
+                                Opslaan
                             </Button>
                             <Button
                                 size="sm"
@@ -105,8 +116,8 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                             >
                                 Annuleer
                             </Button>
-                        </div>
-                    </div>
+                        </Group>
+                    </Stack>
                 ) : (
                     <Stack gap={0}>
                         <TextInput
@@ -115,30 +126,32 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                             onChange={(e) => setSearchQuery(e.currentTarget.value)}
                             variant="unstyled"
                             p="sm"
-                            className="border-b"
+                            className="border-b border-(--mantine-color-default-border)"
                             autoFocus
                         />
                         <ScrollArea.Autosize mah={250}>
                             {filteredProjects.length === 0 ? (
-                                <div className="p-4 text-sm text-center text-muted-foreground">Geen projecten gevonden.</div>
+                                <Box p="md">
+                                    <Text size="sm" ta="center" c="dimmed">Geen projecten gevonden.</Text>
+                                </Box>
                             ) : (
-                                <div className="p-1">
+                                <Box p={4}>
+                                    <Text size="xs" fw={700} c="dimmed" tt="uppercase" px="xs" py={6} style={{ letterSpacing: '0.05em' }}>Mijn lijsten</Text>
                                     <UnstyledButton
                                         onClick={() => {
                                             onSelect(null)
                                             setOpen(false)
                                         }}
-                                        className={cn(
-                                            "w-full flex items-center gap-2 p-2 rounded-sm text-sm hover:bg-muted/50 transition-colors",
-                                        )}
+                                        w="100%"
+                                        px="sm"
+                                        py="xs"
+                                        bg={currentProjectId === null ? "var(--mantine-color-default-hover)" : undefined}
+                                        className="transition-colors duration-150"
                                     >
-                                        <Check
-                                            className={cn(
-                                                "h-4 w-4",
-                                                currentProjectId === null ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                        Geen project
+                                        <Group gap="sm" wrap="nowrap">
+                                            <IconList size={16} color="var(--mantine-color-dimmed)" style={{ flexShrink: 0 }} />
+                                            <Text size="sm" fw={currentProjectId === null ? 600 : 400} truncate>Geen project</Text>
+                                        </Group>
                                     </UnstyledButton>
                                     {filteredProjects.map((project) => (
                                         <UnstyledButton
@@ -147,31 +160,37 @@ export function ProjectSelector({ currentProjectId, onSelect }: ProjectSelectorP
                                                 onSelect(project.id)
                                                 setOpen(false)
                                             }}
-                                            className={cn(
-                                                "w-full flex items-center gap-2 p-2 rounded-sm text-sm hover:bg-muted/50 transition-colors",
-                                            )}
+                                            w="100%"
+                                            px="sm"
+                                            py="xs"
+                                            bg={currentProjectId === project.id ? "var(--mantine-color-default-hover)" : undefined}
+                                            className="transition-colors duration-150"
                                         >
-                                            <Check
-                                                className={cn(
-                                                    "h-4 w-4",
-                                                    currentProjectId === project.id ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                            {project.displayName}
+                                            <Group gap="sm" wrap="nowrap">
+                                                <IconList size={16} color="var(--mantine-color-dimmed)" style={{ flexShrink: 0 }} />
+                                                <Text size="sm" fw={currentProjectId === project.id ? 600 : 400} truncate flex={1}>{project.displayName}</Text>
+                                            </Group>
                                         </UnstyledButton>
                                     ))}
-                                </div>
+                                </Box>
                             )}
                         </ScrollArea.Autosize>
-                        <div className="border-t p-1">
+                        <Divider />
+                        <Box p={4}>
                             <UnstyledButton
                                 onClick={() => setIsCreating(true)}
-                                className="w-full flex items-center gap-2 p-2 rounded-sm text-sm text-primary hover:bg-muted/50 transition-colors"
+                                w="100%"
+                                p="xs"
+                                className="transition-colors duration-150"
+                                style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                                c="blue.6"
                             >
-                                <Plus className="h-4 w-4" />
-                                Nieuw project aanmaken
+                                <Group gap="xs">
+                                    <IconPlus size={16} />
+                                    <Text size="sm">Nieuw project aanmaken</Text>
+                                </Group>
                             </UnstyledButton>
-                        </div>
+                        </Box>
                     </Stack>
                 )}
             </Popover.Dropdown>

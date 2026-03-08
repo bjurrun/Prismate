@@ -1,17 +1,11 @@
 'use client'
+import { IconPlus, IconCalendar, IconBell, IconRefresh, IconBriefcase, IconSun, IconStar, IconBookmark, IconStarFilled } from "@tabler/icons-react";
 
 import * as React from "react"
-import {
-    Plus,
-    Calendar as CalendarIcon,
-    Bell,
-    Repeat,
-    Briefcase
-} from "lucide-react"
-import { TextInput, Button, Popover, Select, Paper } from "@mantine/core"
+
+import { TextInput, Button, Popover, Select, Paper, ActionIcon, Box, Group, Flex } from "@mantine/core"
 import { addTask } from "@/app/actions"
 import { useTransition } from "react"
-import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { nl } from "date-fns/locale"
 import { DatePicker } from "@mantine/dates"
@@ -48,15 +42,23 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
     const [reminderDate, setReminderDate] = React.useState<Date | null>(null)
     const [recurrence, setRecurrence] = React.useState<RecurrenceData | null>(null)
     const [projectId, setProjectId] = React.useState<string>(urlProjectId || "none")
+    
+    // Smart List toggles
+    const [isMyDay, setIsMyDay] = React.useState(urlFilter === 'myday')
+    const [isImportant, setIsImportant] = React.useState(urlFilter === 'important')
+    const [isSomeday, setIsSomeday] = React.useState(urlFilter === 'someday')
 
-    // Update projectId when urlProjectId changes
+    // Update form when url filters change
     React.useEffect(() => {
         if (urlProjectId) {
             setProjectId(urlProjectId)
         } else {
             setProjectId("none")
         }
-    }, [urlProjectId])
+        setIsMyDay(urlFilter === 'myday')
+        setIsImportant(urlFilter === 'important')
+        setIsSomeday(urlFilter === 'someday')
+    }, [urlProjectId, urlFilter])
 
     const [isPending, startTransition] = useTransition()
     const containerRef = React.useRef<HTMLDivElement>(null)
@@ -83,11 +85,10 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
         if (dueDate) formData.append("dueDateTime", dueDate.toISOString())
         if (reminderDate) formData.append("reminderDateTime", reminderDate.toISOString())
         if (recurrence) formData.append("recurrence", JSON.stringify(recurrence))
-
-        // Context-aware: Als we in "Belangrijk" lijst zitten, taak belangrijk maken
-        if (urlFilter === 'important') {
-            formData.append("isImportant", "true")
-        }
+        
+        if (isImportant) formData.append("isImportant", "true")
+        if (isMyDay) formData.append("isMyDay", "true")
+        if (isSomeday) formData.append("isSomeday", "true")
 
         setTitle("")
         setDueDate(null)
@@ -96,6 +97,9 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
 
         // Reset to context defaults
         setProjectId(urlProjectId || "none")
+        setIsMyDay(urlFilter === 'myday')
+        setIsImportant(urlFilter === 'important')
+        setIsSomeday(urlFilter === 'someday')
         setIsExpanded(false)
 
         startTransition(async () => {
@@ -110,17 +114,19 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
     }
 
     return (
-        <div ref={containerRef} className="mb-4">
-            <Paper className={cn(
-                "max-w-4xl transition-all duration-200 overflow-hidden border shadow-sm",
-                isExpanded ? "ring-1 ring-primary/20" : "hover:shadow-md"
-            )}>
-                <div className="p-1">
-                    <div className="flex items-center gap-3 px-3 py-1.5 transition-all">
-                        <Plus className={cn(
-                            "h-5 w-5 transition-colors",
-                            isExpanded ? "text-primary" : "text-muted-foreground"
-                        )} />
+        <Box ref={containerRef} mb={0}>
+            <Paper
+                shadow="sm"
+                withBorder={isExpanded}
+                style={{ transition: 'all 200ms', overflow: 'hidden' }}
+            >
+                <Box p={0}>
+                    <Group gap="sm" px="md" py="sm" wrap="nowrap">
+                        <IconPlus
+                            size={20}
+                            color={isExpanded ? 'var(--mantine-color-blue-filled)' : 'var(--mantine-color-dimmed)'}
+                            style={{ transition: 'color 150ms' }}
+                        />
                         <TextInput
                             placeholder="Een taak toevoegen"
                             value={title}
@@ -129,36 +135,39 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
                             onKeyDown={handleKeyDown}
                             disabled={isPending}
                             variant="unstyled"
-                            className="flex-1"
-                            styles={{ input: { fontSize: '14px', fontWeight: 500 } }}
+                            flex={1}
+                            styles={{ input: { fontSize: '15px', fontWeight: 500 } }}
                         />
-                    </div>
+                    </Group>
 
                     {isExpanded && (
-                        <div className="px-3 pb-2 pt-1 flex flex-col sm:flex-row sm:items-center justify-between border-t bg-muted/5 animate-in fade-in slide-in-from-top-1 duration-200 gap-2">
-                            <div className="flex flex-wrap items-center gap-1">
+                        <Flex 
+                            direction={{ base: 'column', sm: 'row' }} 
+                            align={{ sm: 'center' }} 
+                            justify="space-between" 
+                            px="xl" pb="sm" pt="xs" gap="sm" 
+                            bg="var(--mantine-color-gray-0)"
+                            style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}
+                        >
+                            <Group gap="xs" wrap="wrap">
                                 {/* Vervaldatum */}
                                 <Popover position="bottom-start" shadow="md">
                                     <Popover.Target>
                                         <Button
-                                            variant="subtle"
-                                            color="gray"
-                                            size="sm"
-                                            className={cn(
-                                                "h-8 px-2 gap-2 text-xs font-normal",
-                                                dueDate && "text-primary bg-primary/5"
-                                            )}
+                                            variant={dueDate ? "light" : "subtle"}
+                                            color={dueDate ? "blue" : "gray"}
+                                            size="compact-sm"
+                                            leftSection={<IconCalendar size={16} />}
                                         >
-                                            <CalendarIcon className="h-4 w-4" />
                                             {dueDate && format(dueDate, "d MMM", { locale: nl })}
                                         </Button>
                                     </Popover.Target>
                                     <Popover.Dropdown p="0">
                                         <DatePicker
+					    type="default"
                                             value={dueDate}
-                                            // @ts-expect-error Mantine DatePicker type mismatch in this specific environment
+					    // @ts-expect-error type mismatch mantine
                                             onChange={(date: Date | null) => setDueDate(date)}
-                                            locale="nl"
                                         />
                                     </Popover.Dropdown>
                                 </Popover>
@@ -175,9 +184,36 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
                                     onChange={setRecurrence}
                                 />
 
+                                <Group gap={4} style={{ marginLeft: 'var(--mantine-spacing-xs)', borderLeft: '1px solid var(--mantine-color-default-border)', paddingLeft: 'var(--mantine-spacing-xs)' }}>
+                                    <ActionIcon 
+                                        variant="subtle" 
+                                        color={isMyDay ? "yellow" : "gray"}
+                                        size="sm"
+                                        onClick={() => setIsMyDay(!isMyDay)}
+                                    >
+                                        <IconSun size={16} color={isMyDay ? 'var(--mantine-color-yellow-5)' : 'var(--mantine-color-dimmed)'} />
+                                    </ActionIcon>
+                                    <ActionIcon 
+                                        variant="subtle" 
+                                        color={isImportant ? "red" : "gray"}
+                                        size="sm"
+                                        onClick={() => setIsImportant(!isImportant)}
+                                    >
+                                        {isImportant ? <IconStarFilled size={16} color="var(--mantine-color-red-5)" /> : <IconStar size={16} />}
+                                    </ActionIcon>
+                                    <ActionIcon 
+                                        variant="subtle" 
+                                        color={isSomeday ? "blue" : "gray"}
+                                        size="sm"
+                                        onClick={() => setIsSomeday(!isSomeday)}
+                                    >
+                                        <IconBookmark size={16} color={isSomeday ? 'var(--mantine-color-blue-5)' : 'var(--mantine-color-dimmed)'} />
+                                    </ActionIcon>
+                                </Group>
+
                                 {/* Project Select */}
-                                <div className="sm:ml-2 sm:border-l sm:pl-2 flex items-center gap-2">
-                                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                <Group gap="sm" style={{ marginLeft: 'var(--mantine-spacing-xs)', borderLeft: '1px solid var(--mantine-color-default-border)', paddingLeft: 'var(--mantine-spacing-xs)' }}>
+                                    <IconBriefcase size={16} color="var(--mantine-color-dimmed)" />
                                     <Select
                                         value={projectId}
                                         onChange={(val) => setProjectId(val || "none")}
@@ -187,29 +223,28 @@ export function QuickAddTask({ projects = [] }: { projects?: Project[] }) {
                                         ]}
                                         size="xs"
                                         variant="unstyled"
-                                        className="w-[120px]"
+                                        w={120}
                                     />
-                                </div>
-                            </div>
+                                </Group>
+                            </Group>
 
                             <Button
-                                size="sm"
+                                size="compact-sm"
                                 onClick={handleAdd}
                                 disabled={!title.trim() || isPending}
-                                className="h-8 px-4"
                             >
                                 {isPending ? "..." : "Toevoegen"}
                             </Button>
-                        </div>
+                        </Flex>
                     )}
-                </div>
+                </Box>
                 {isPending && (
-                    <div className="h-0.5 w-full bg-primary/10 overflow-hidden">
-                        <div className="w-full h-full bg-primary animate-progress origin-left" />
-                    </div>
+                    <Box h={2} w="100%" bg="var(--mantine-color-blue-light)" style={{ overflow: 'hidden' }}>
+                        <Box w="100%" h="100%" bg="var(--mantine-color-blue-filled)" className="animate-progress" style={{ transformOrigin: 'left' }} />
+                    </Box>
                 )}
             </Paper>
-        </div>
+        </Box>
     )
 }
 
@@ -218,15 +253,11 @@ function ReminderPickerPopover({ date, onChange }: { date: Date | null, onChange
         <Popover position="bottom-start" shadow="md">
             <Popover.Target>
                 <Button
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    className={cn(
-                        "h-8 px-2 gap-2 text-xs font-normal",
-                        date && "text-primary bg-primary/5"
-                    )}
+                    variant={date ? "light" : "subtle"}
+                    color={date ? "blue" : "gray"}
+                    size="compact-sm"
+                    leftSection={<IconBell size={16} />}
                 >
-                    <Bell className="h-4 w-4" />
                     {date && format(date, "HH:mm")}
                 </Button>
             </Popover.Target>
@@ -242,15 +273,11 @@ function RecurrencePickerPopover({ value, onChange }: { value: RecurrenceData | 
         <Popover position="bottom-start" shadow="md">
             <Popover.Target>
                 <Button
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    className={cn(
-                        "h-8 px-2 gap-2 text-xs font-normal",
-                        value && "text-primary bg-primary/5"
-                    )}
+                    variant={value ? "light" : "subtle"}
+                    color={value ? "blue" : "gray"}
+                    size="compact-sm"
+                    leftSection={<IconRefresh size={16} />}
                 >
-                    <Repeat className="h-4 w-4" />
                     {value && "Herhaalt"}
                 </Button>
             </Popover.Target>

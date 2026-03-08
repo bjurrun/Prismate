@@ -1,21 +1,11 @@
 'use client'
+import { IconChevronDown, IconHome, IconPlus, IconChevronRight, IconList, IconSun, IconCalendar, IconStar, IconBookmark } from "@tabler/icons-react";
 
 import React, { useState, useEffect, useTransition } from 'react'
-import { ScrollArea, Text, Group, ActionIcon, Menu, UnstyledButton, Stack, Checkbox, TextInput, Anchor } from '@mantine/core'
-import {
-    ChevronDown,
-    Home,
-    Sun,
-    Calendar,
-    List,
-    Plus,
-    Star,
-    ChevronRight
-} from 'lucide-react'
-import { getTasksAction, getProjects, addTask, toggleTaskStatus, updateTask } from '@/app/actions'
-import { format } from 'date-fns'
-import { nl } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import { ScrollArea, Text, Menu, UnstyledButton, TextInput, Anchor, Stack, Box, Group, Divider } from '@mantine/core'
+
+import { getTasksAction, getProjects, addTask } from '@/app/actions'
+import { TaskList } from '@/components/task-list'
 
 interface Task {
     id: string
@@ -34,23 +24,27 @@ interface Project {
     microsoftId: string | null
 }
 
-export function TaskSidebar({ onDragStart }: { onDragStart?: (task: { id: string, title: string, type: string }) => void }) {
-    const [selectedList, setSelectedList] = useState<{ id: string; name: string; icon: React.ReactNode }>({
-        id: 'tasks',
-        name: 'Taken',
-        icon: <Home size={16} />
-    })
+const SMART_LISTS = [
+    { id: 'tasks', name: 'Taken', icon: <IconHome size={16} color="var(--mantine-color-blue-5)" /> },
+    { id: 'myday', name: 'Mijn dag', icon: <IconSun size={16} color="var(--mantine-color-yellow-5)" /> },
+    { id: 'planned', name: 'Gepland', icon: <IconCalendar size={16} color="var(--mantine-color-green-5)" /> },
+    { id: 'someday', name: 'Ooit', icon: <IconBookmark size={16} color="var(--mantine-color-blue-5)" /> },
+    { id: 'important', name: 'Belangrijk', icon: <IconStar size={16} color="var(--mantine-color-red-5)" /> },
+]
+
+export function TaskSidebar({ defaultListId = 'tasks' }: { onDragStart?: (task: { id: string, title: string, type: string }) => void, defaultListId?: string }) {
+    const [selectedList, setSelectedList] = useState<{ id: string; name: string; icon: React.ReactNode }>(
+        SMART_LISTS.find(l => l.id === defaultListId) || SMART_LISTS[0]
+    )
     const [tasks, setTasks] = useState<Task[]>([])
     const [projects, setProjects] = useState<Project[]>([])
     const [newTaskTitle, setNewTaskTitle] = useState('')
     const [isPending, startTransition] = useTransition()
 
-    // Fetch projects on mount
     useEffect(() => {
         getProjects().then(setProjects)
     }, [])
 
-    // Fetch tasks when list selection changes
     const refreshTasks = React.useCallback(async () => {
         let filter: string | undefined
         let projectId: string | undefined
@@ -80,10 +74,6 @@ export function TaskSidebar({ onDragStart }: { onDragStart?: (task: { id: string
         if (!['important', 'myday', 'planned', 'tasks'].includes(selectedList.id)) {
             formData.append('projectId', selectedList.id)
         }
-        if (selectedList.id === 'myday') {
-            // How to handle myDay in the standard addTask? 
-            // The standard addTask doesn't explicitly set isMyDay, but we could extend it or handle it.
-        }
 
         startTransition(async () => {
             await addTask(formData)
@@ -92,50 +82,31 @@ export function TaskSidebar({ onDragStart }: { onDragStart?: (task: { id: string
         })
     }
 
-    const handleToggleStatus = (taskId: string, completed: boolean) => {
-        startTransition(async () => {
-            await toggleTaskStatus(taskId, completed)
-            refreshTasks()
-        })
-    }
-
-    const handleToggleImportance = (taskId: string, currentImportance: string) => {
-        const newImportance = currentImportance === 'high' ? 'normal' : 'high'
-        startTransition(async () => {
-            await updateTask(taskId, { importance: newImportance })
-            refreshTasks()
-        })
-    }
-
-    const smartLists = [
-        { id: 'tasks', name: 'Taken', icon: <Home size={16} className="text-blue-500" /> },
-        { id: 'myday', name: 'Mijn dag', icon: <Sun size={16} className="text-amber-500" /> },
-        { id: 'planned', name: 'Gepland', icon: <Calendar size={16} className="text-emerald-500" /> },
-        { id: 'important', name: 'Belangrijk', icon: <Star size={16} className="text-rose-500" /> },
-    ]
-
     return (
-        <div className="flex flex-col h-full bg-white">
+        <Stack h="100%" gap={0}>
             {/* List Selector Header */}
-            <div className="px-4 py-3 border-b border-gray-100">
+            <Box px="md" py="sm" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
                 <Menu shadow="md" width={240} position="bottom-start">
                     <Menu.Target>
-                        <UnstyledButton className="group flex items-center gap-2 hover:bg-gray-50 px-2 py-1.5 rounded-md transition-colors w-full">
-                            <span className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                {selectedList.name}
-                                <ChevronDown size={18} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
-                            </span>
+                        <UnstyledButton w="100%" px="xs" py={6}>
+                            <Group gap="xs">
+                                <Text fw={700} size="lg">{selectedList.name}</Text>
+                                <IconChevronDown size={18} color="var(--mantine-color-dimmed)" />
+                            </Group>
                         </UnstyledButton>
                     </Menu.Target>
 
-                    <Menu.Dropdown className="p-1">
-                        <Menu.Label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 px-2 py-1.5">Slimme lijsten</Menu.Label>
-                        {smartLists.map(list => (
+                    <Menu.Dropdown p={4}>
+                        <Menu.Label>
+                            <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.05em' }}>Slimme lijsten</Text>
+                        </Menu.Label>
+                        {SMART_LISTS.map(list => (
                             <Menu.Item
                                 key={list.id}
                                 leftSection={list.icon}
                                 onClick={() => setSelectedList(list)}
-                                className={cn("text-sm", selectedList.id === list.id && "bg-gray-50 font-semibold")}
+                                bg={selectedList.id === list.id ? 'var(--mantine-color-default-hover)' : undefined}
+                                fw={selectedList.id === list.id ? 600 : undefined}
                             >
                                 {list.name}
                             </Menu.Item>
@@ -143,31 +114,34 @@ export function TaskSidebar({ onDragStart }: { onDragStart?: (task: { id: string
 
                         <Menu.Divider />
 
-                        <Menu.Label className="text-[10px] uppercase tracking-wider font-bold text-gray-400 px-2 py-1.5">Mijn lijsten</Menu.Label>
+                        <Menu.Label>
+                            <Text size="xs" fw={700} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.05em' }}>Mijn lijsten</Text>
+                        </Menu.Label>
                         {projects.map(project => (
                             <Menu.Item
                                 key={project.id}
-                                leftSection={<List size={16} className="text-gray-400" />}
-                                onClick={() => setSelectedList({ id: project.id, name: project.displayName, icon: <List size={16} /> })}
-                                className={cn("text-sm", selectedList.id === project.id && "bg-gray-50 font-semibold")}
+                                leftSection={<IconList size={16} />}
+                                onClick={() => setSelectedList({ id: project.id, name: project.displayName, icon: <IconList size={16} /> })}
+                                bg={selectedList.id === project.id ? 'var(--mantine-color-default-hover)' : undefined}
+                                fw={selectedList.id === project.id ? 600 : undefined}
                             >
                                 {project.displayName}
                             </Menu.Item>
                         ))}
                     </Menu.Dropdown>
                 </Menu>
-            </div>
+            </Box>
 
             {/* Quick Add Input */}
-            <div className="px-4 py-2">
+            <Box px="md" py="xs">
                 <form onSubmit={handleAddTask}>
-                    <div className="flex items-center gap-2 text-gray-400 group focus-within:text-blue-500 transition-colors border-b border-transparent focus-within:border-gray-100 py-1">
-                        <Plus size={20} className="shrink-0" />
+                    <Group gap="xs" py={4} style={{ borderBottom: '1px solid transparent' }}>
+                        <IconPlus size={20} color="var(--mantine-color-dimmed)" style={{ flexShrink: 0 }} />
                         <TextInput
                             placeholder="Taak toevoegen"
                             variant="unstyled"
                             size="sm"
-                            className="flex-1"
+                            flex={1}
                             value={newTaskTitle}
                             onChange={(e) => setNewTaskTitle(e.currentTarget.value)}
                             styles={{
@@ -175,91 +149,39 @@ export function TaskSidebar({ onDragStart }: { onDragStart?: (task: { id: string
                                     padding: 0,
                                     minHeight: 'auto',
                                     fontWeight: 500,
-                                    '&::placeholder': { color: '#94a3b8' }
                                 }
                             }}
                         />
-                    </div>
+                    </Group>
                 </form>
-            </div>
+            </Box>
 
             {/* Task List */}
-            <ScrollArea className={cn("flex-1 px-2 transition-opacity", isPending && "opacity-50 pointer-events-none")}>
-                <Stack gap={0} py="xs">
-                    {tasks.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                            <Text size="xs" color="dimmed" fs="italic">Geen taken in deze lijst</Text>
-                        </div>
-                    ) : (
-                        tasks.map(task => (
-                            <div
-                                key={task.id}
-                                className="group flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-50/80 transition-all border-b border-gray-50 last:border-0 cursor-grab active:cursor-grabbing"
-                                draggable
-                                onDragStart={(e) => {
-                                    const taskData = {
-                                        id: task.id,
-                                        title: task.title,
-                                        type: 'task'
-                                    }
-                                    e.dataTransfer.setData('text/plain', JSON.stringify(taskData))
-                                    e.dataTransfer.effectAllowed = 'move'
-                                    if (onDragStart) onDragStart(taskData)
-                                }}
-                            >
-                                <Checkbox
-                                    radius="xl"
-                                    size="sm"
-                                    className="pt-0.5"
-                                    checked={task.status === 'completed'}
-                                    onChange={(e) => handleToggleStatus(task.id, e.currentTarget.checked)}
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <Text size="sm" className={cn(
-                                        "font-medium truncate leading-tight",
-                                        task.status === 'completed' && "text-gray-400 line-through"
-                                    )}>
-                                        {task.title}
-                                    </Text>
-                                    {task.dueDateTime && (
-                                        <Group gap={4} mt={2}>
-                                            <Calendar size={10} className="text-gray-400" />
-                                            <Text size="10px" color="dimmed" className="font-semibold uppercase tracking-tight">
-                                                {format(new Date(task.dueDateTime), 'd MMM', { locale: nl })}
-                                            </Text>
-                                        </Group>
-                                    )}
-                                </div>
-                                <ActionIcon
-                                    variant="subtle"
-                                    color={task.importance === 'high' ? 'blue' : 'gray'}
-                                    size="sm"
-                                    onClick={() => handleToggleImportance(task.id, task.importance)}
-                                    className={cn(
-                                        "opacity-0 group-hover:opacity-100 transition-opacity",
-                                        task.importance === 'high' && "opacity-100"
-                                    )}
-                                >
-                                    <Star size={16} fill={task.importance === 'high' ? 'currentColor' : 'none'} />
-                                </ActionIcon>
-                            </div>
-                        ))
-                    )}
-                </Stack>
+            <ScrollArea flex={1} style={{ opacity: isPending ? 0.5 : 1, pointerEvents: isPending ? 'none' : 'auto', transition: 'opacity 150ms' }}>
+                <Box py="xs">
+                    <TaskList 
+                        // @ts-expect-error type mismatch with complex relations
+                        tasks={tasks} 
+                        filter={selectedList.id}
+                        mode="sidebar" 
+                    />
+                </Box>
 
-                {/* Recently Completed Placeholder */}
-                <UnstyledButton className="w-full flex items-center gap-2 px-3 py-3 mt-2 text-gray-500 hover:text-blue-600 transition-colors group">
-                    <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                    <Text size="xs" fw={600}>Onlangs voltooid weergeven</Text>
+                <UnstyledButton w="100%" px="sm" py="sm" mt="xs" c="dimmed">
+                    <Group gap="xs">
+                        <IconChevronRight size={16} />
+                        <Text size="xs" fw={600}>Onlangs voltooid weergeven</Text>
+                    </Group>
                 </UnstyledButton>
             </ScrollArea>
 
             {/* Footer Link */}
-            <div className="p-4 border-t border-gray-100 flex justify-end">
-                <Anchor href="/tasks" className="text-[12px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+            <Divider />
+            <Group p="md" justify="flex-end">
+                <Anchor href="/tasks" size="xs" fw={700}>
                     Alle taken beheren
                 </Anchor>
-            </div>
-        </div>
+            </Group>
+        </Stack>
     )
 }

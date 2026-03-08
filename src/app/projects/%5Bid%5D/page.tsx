@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { TaskList } from "@/components/task-list"
 import { Button, TextInput, Title, Paper } from "@mantine/core"
 import { addTask } from "@/app/actions"
-import { ArrowLeft } from "lucide-react"
+import { IconArrowLeft } from "@tabler/icons-react"
 import Link from "next/link"
 
 interface ProjectPageProps {
@@ -39,8 +39,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         <main className="flex flex-col items-center p-8 pt-12">
             <div className="w-full max-w-4xl space-y-8">
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="hover:text-primary transition-colors">
-                        <ArrowLeft className="h-6 w-6" />
+                    <Link href="/" className="hover:text-(--mantine-color-blue-filled) transition-colors">
+                        <IconArrowLeft className="h-6 w-6" />
                     </Link>
                     <Title order={1}>{project.displayName}</Title>
                 </div>
